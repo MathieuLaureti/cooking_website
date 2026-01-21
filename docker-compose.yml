@@ -1,0 +1,57 @@
+services:
+  console:
+    container_name: cw_console
+    image: cw_console_container
+    restart: unless-stopped
+    build:
+      context: ./console
+      dockerfile: dockerfile
+    env_file: .env
+    ports:
+      - 6665:6665
+    volumes:
+      - ./console:/app
+  server:
+    container_name: cw_server
+    image: cw_server_container
+    restart: unless-stopped
+    build:
+      context: ./server
+      dockerfile: dockerfile
+    env_file: .env
+    ports:
+      - 6666:6666
+    volumes:
+      - ./server:/code
+
+  timescale:
+    container_name: cw_db
+    image: timescale/timescaledb:2.23.1-pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      TS_TUNE_MEMORY: "2GB"
+      TS_TUNE_NUM_CPUS: "2"
+      PGPORT: 6667
+    ports:
+      - 6667:6667
+    env_file: .env
+    volumes:
+      - cw_data:/var/lib/postgresql/data
+      
+  nginx:
+    container_name: cw_nginx
+    image: cw_nginx_container
+    restart: unless-stopped
+    build:
+      context: ./nginx
+      dockerfile: dockerfile
+    env_file: .env
+    ports:
+      - 81:81
+
+volumes:
+  cw_data:
+
