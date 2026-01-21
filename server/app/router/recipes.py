@@ -97,6 +97,12 @@ async def delete_dish_by_id(dish_id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Dish not found"
         )
+    recipe_in_dish = db.query(Recipe).filter(Recipe.dish_id == dish_id).first()
+    if recipe_in_dish:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete dish with existing recipes. Please delete associated recipes first."
+        )
     db.delete(dish_exist)
     db.commit()
     return {"detail": "Dish deleted successfully"}
