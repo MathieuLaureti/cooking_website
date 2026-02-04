@@ -50,7 +50,7 @@ services:
       dockerfile: dockerfile
     env_file: .env
     ports:
-      - 81:81
+      - 80:80
 
 volumes:
   cw_data:
