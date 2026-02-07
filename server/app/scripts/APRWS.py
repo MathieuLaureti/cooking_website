@@ -55,7 +55,7 @@ class WebRecipeExtractor:
         payload = {
             "model": self.model,
             "prompt": f"Dish ID: {dish_id}\n\nText:\n{text}",
-            "system": f"Professional chef. Output JSON per schema: {json.dumps(schema)}. Rules: quantities are strings to account for (e.g., '1/4', '1/2') else put integer. No accents in title like é for example café should be cafe and reduce it to its simplest form.",
+            "system": f"Professional chef. Output JSON per schema: {json.dumps(schema)}. Rules: quantities are strings to account for (e.g., '1/4', '1/2') else put integer. No accents in title like é for example café should be cafe and reduce it to its simplest form. A Recipe can be a list of ingredient with no instructions.",
             "stream": False,
             "format": "json",
             "options": {"temperature": 0, "num_ctx": 8192},

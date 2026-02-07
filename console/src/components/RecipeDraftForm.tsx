@@ -23,7 +23,6 @@ const RecipeDraftForm: React.FC<RecipeDraftFormProps> = ({
 
   return (
     <div className="bg-[#374239] w-full p-6 rounded shadow-2xl border border-white/5 text-[#F7F5F2] h-full">
-      {/* AI Extraction Tools */}
       <div className="mb-8 p-4 bg-black/20 border border-dashed border-white/10 rounded-lg">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 flex gap-2">
@@ -58,11 +57,14 @@ const RecipeDraftForm: React.FC<RecipeDraftFormProps> = ({
 
       <div className="flex justify-between items-center mb-6">
         <div className="flex flex-col">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-[#5E7161] font-bold">Drafting</span>
-          <h2 className="text-2xl font-black italic uppercase">New Recipe</h2>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-[#5E7161] font-bold">
+            {formRecipe.id ? 'Editing' : 'Drafting'}
+          </span>
+          <h2 className="text-2xl font-black italic uppercase">
+            {formRecipe.id ? formRecipe.name : 'New Recipe'}
+          </h2>
         </div>
         <div className="flex gap-4">
-          <button onClick={() => setFormRecipe({ name: '',id: 0, dish_id: 0, components: [] })} className="text-[10px] text-red-400 border border-red-400/20 px-2 py-1 uppercase font-bold hover:bg-red-400 hover:text-black">Scrap Recipe</button>
           <button onClick={onClose} className="text-xs opacity-50 uppercase tracking-widest hover:text-white pt-1">Close</button>
         </div>
       </div>
@@ -93,15 +95,20 @@ const RecipeDraftForm: React.FC<RecipeDraftFormProps> = ({
             <div className="space-y-3">
               <span className="text-[9px] uppercase tracking-widest text-[#5E7161] font-bold block mb-2">Ingredients</span>
               {comp.ingredients.map((ing, iIdx) => (
-                <div key={iIdx} className="flex gap-2 group/item">
+                <div key={iIdx} className="flex gap-2">
                   <input className="flex-1 bg-[#4A594D] p-2 text-sm outline-none" placeholder="Item" value={ing.name}
                          onChange={e => {
                            const ings = [...comp.ingredients]; ings[iIdx].name = e.target.value;
                            updateComponent(cIdx, { ...comp, ingredients: ings });
                          }} />
-                  <input className="w-20 bg-[#4A594D] p-2 text-sm outline-none font-mono text-center" placeholder="Qty" value={ing.quantity || ''}
+                  <input className="w-16 bg-[#4A594D] p-2 text-sm outline-none font-mono text-center" placeholder="Qty" value={ing.quantity || ''}
                          onChange={e => {
                            const ings = [...comp.ingredients]; ings[iIdx].quantity = Number(e.target.value);
+                           updateComponent(cIdx, { ...comp, ingredients: ings });
+                         }} />
+                  <input className="w-16 bg-[#4A594D] p-2 text-sm outline-none font-mono text-[#FFA500]" placeholder="Unit" value={ing.unit || ''}
+                         onChange={e => {
+                           const ings = [...comp.ingredients]; ings[iIdx].unit = e.target.value;
                            updateComponent(cIdx, { ...comp, ingredients: ings });
                          }} />
                 </div>
@@ -112,13 +119,13 @@ const RecipeDraftForm: React.FC<RecipeDraftFormProps> = ({
             <div className="space-y-3">
               <span className="text-[9px] uppercase tracking-widest text-[#5E7161] font-bold block mb-2">Instructions</span>
               {comp.instructions.map((inst, sIdx) => (
-                <div key={sIdx} className="flex gap-2 group/step">
+                <div key={sIdx} className="flex gap-2">
                   <span className="text-xs font-mono text-[#5E7161] pt-2">{inst.step}</span>
                   <textarea className="flex-1 bg-[#4A594D] p-2 text-sm outline-none resize-none" rows={1} value={inst.text}
-                            onChange={e => {
-                              const insts = [...comp.instructions]; insts[sIdx].text = e.target.value;
-                              updateComponent(cIdx, { ...comp, instructions: insts });
-                            }} />
+                             onChange={e => {
+                               const insts = [...comp.instructions]; insts[sIdx].text = e.target.value;
+                               updateComponent(cIdx, { ...comp, instructions: insts });
+                             }} />
                 </div>
               ))}
               <button onClick={() => updateComponent(cIdx, { ...comp, instructions: [...comp.instructions, {step: comp.instructions.length + 1, text: ''}] })} className="text-[10px] text-[#FFA500] uppercase font-bold hover:underline">+ Add Step</button>
@@ -130,7 +137,9 @@ const RecipeDraftForm: React.FC<RecipeDraftFormProps> = ({
       <div className="flex gap-4 mt-8 border-t border-white/5 pt-6">
         <button onClick={() => setFormRecipe({...formRecipe, components: [...formRecipe.components, { name: '', ingredients: [{name:'', quantity:0, unit:''}], instructions: [{step: 1, text:''}] }]})} 
                 className="border border-white/10 px-6 py-3 text-[10px] font-bold uppercase hover:bg-white/5">Add Component</button>
-        <button onClick={onSubmit} className="flex-1 bg-[#FFA500] text-black py-3 font-black uppercase text-sm hover:bg-[#FFB732]">Save Recipe</button>
+        <button onClick={onSubmit} className="flex-1 bg-[#FFA500] text-black py-3 font-black uppercase text-sm hover:bg-[#FFB732]">
+          {formRecipe.id ? 'Update Recipe' : 'Save Recipe'}
+        </button>
       </div>
     </div>
   );

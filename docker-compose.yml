@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     build:
       context: ./console
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     env_file: .env
     ports:
       - 6665:6665
@@ -17,12 +17,26 @@ services:
     restart: unless-stopped
     build:
       context: ./server
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     env_file: .env
     ports:
       - 6666:6666
     volumes:
       - ./server:/code
+  public_server:
+    container_name: cw_rust_api
+    build:
+      context: ./public_server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@timescale:6667/${DB_NAME}
+    ports:
+      - 6668:6668
+    depends_on:
+      timescale:
+        condition: service_healthy
 
   timescale:
     container_name: cw_db
@@ -40,6 +54,11 @@ services:
     env_file: .env
     volumes:
       - cw_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -p 6667 -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
       
   nginx:
     container_name: cw_nginx
@@ -47,10 +66,11 @@ services:
     restart: unless-stopped
     build:
       context: ./nginx
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     env_file: .env
     ports:
       - 80:80
+      - 443:443
 
 volumes:
   cw_data:

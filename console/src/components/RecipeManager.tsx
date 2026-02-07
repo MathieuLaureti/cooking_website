@@ -14,9 +14,15 @@ const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> 
   const [isCreatingDish, setIsCreatingDish] = useState(false);
   const [newDishName, setNewDishName] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
-  
-  // Removed 'id: 0' as it should be undefined for new recipes until DB return
-  const [formRecipe, setFormRecipe] = useState<RecipeFull>({ id: 0, name: '', dish_id: selectedDish ? selectedDish.id : 0, components: [] });
+
+  const emptyRecipe = (dishId: number): RecipeFull => ({ 
+    id: 0, 
+    name: '', 
+    dish_id: dishId, 
+    components: [] 
+  });
+
+  const [formRecipe, setFormRecipe] = useState<RecipeFull>(emptyRecipe(0));
 
   useEffect(() => { 
     if (!isActive) { 
@@ -49,7 +55,6 @@ const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> 
       setRecipes(prev => prev.filter(r => r.id !== recipeId));
       setSelectedRecipe(null);
     } catch (e) {
-      console.error("Deletion failed:", e);
       alert("SERVER REJECTION: UNABLE TO PURGE RECIPE.");
     }
   };
@@ -66,13 +71,11 @@ const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> 
         formData.append('file', payload);
         res = await axios.post(`${API_BASE}/recipe_image/${selectedDish.id}`, formData);
       }
-      const listRes = await axios.get(`${API_BASE}/recipe_list/${selectedDish.id}`);
-      setRecipes(Array.isArray(listRes.data) ? listRes.data : []);
+      handleDishSelect(selectedDish);
       setIsCreatingRecipe(false);
       setSelectedRecipe(res.data);
     } catch (e) { 
-      console.error("AI Upload Error:", e);
-      alert("AI EXTRACTION ERROR. Check backend logs for 500 status.");
+      alert("AI EXTRACTION ERROR.");
     } finally { setAiLoading(false); }
   };
 
@@ -85,11 +88,19 @@ const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> 
     <RecipeDraftForm 
       formRecipe={formRecipe} setFormRecipe={setFormRecipe} 
       aiLoading={aiLoading} onAiUpload={handleAiUpload}
-      onClose={() => setIsCreatingRecipe(false)}
-      onSubmit={async () => {
-        await axios.post(`${API_BASE}/recipe/${selectedDish!.id}`, formRecipe);
+      onClose={() => {
         setIsCreatingRecipe(false);
-        handleDishSelect(selectedDish!);
+        setFormRecipe(emptyRecipe(selectedDish?.id || 0));
+      }}
+      onSubmit={async () => {
+        if (formRecipe.id && formRecipe.id !== 0) {
+          await axios.put(`${API_BASE}/recipe_edit/${formRecipe.id}`, formRecipe);
+        } else {
+          await axios.post(`${API_BASE}/recipe/${selectedDish!.id}`, formRecipe);
+        }
+        setIsCreatingRecipe(false);
+        if (selectedDish) handleDishSelect(selectedDish);
+        setSelectedRecipe(null);
       }}
     />
   );
@@ -118,7 +129,11 @@ const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> 
               </button>
             )}
             {selectedDish && !selectedRecipe && (
-              <button onClick={() => { setIsCreatingRecipe(true); onSearchTrigger(); }} className="bg-[#FFA500] text-black px-2 py-0.5 font-bold uppercase text-[9px]">+ Create Recipe</button>
+              <button onClick={() => { 
+                setFormRecipe(emptyRecipe(selectedDish.id));
+                setIsCreatingRecipe(true); 
+                onSearchTrigger(); 
+              }} className="bg-[#FFA500] text-black px-2 py-0.5 font-bold uppercase text-[9px]">+ Create Recipe</button>
             )}
           </div>
         </div>
@@ -152,6 +167,10 @@ const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> 
           dishName={selectedDish?.name} 
           onBack={() => setSelectedRecipe(null)} 
           onDelete={handleDeleteRecipe}
+          onEdit={(recipe) => {
+            setFormRecipe(recipe);
+            setIsCreatingRecipe(true);
+          }}
         />
       )}
     </div>

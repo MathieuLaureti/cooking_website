@@ -1,6 +1,6 @@
 server {
-    listen 80;
-    server_name nginx;
+    listen 80 default_server;
+    server_name _;
     location / {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header Host $host;
@@ -10,13 +10,25 @@ server {
         proxy_http_version 1.1;
     }
 
-    location /api/ {
+    location ^~ /api/ {
         rewrite ^/api/(.*) /$1 break;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header Host $host;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "Upgrade";
         proxy_pass http://server:6666;
+        proxy_http_version 1.1;
+        proxy_read_timeout 300;
+        proxy_connect_timeout 300;
+        proxy_send_timeout 300;
+    }
+    location ^~ /rust_api/ {
+        rewrite ^/rust_api/(.*) /$1 break;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_pass http://public_server:6668;
         proxy_http_version 1.1;
         proxy_read_timeout 300;
         proxy_connect_timeout 300;

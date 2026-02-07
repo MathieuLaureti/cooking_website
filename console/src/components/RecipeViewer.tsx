@@ -6,15 +6,14 @@ interface RecipeViewerProps {
   dishName?: string;
   onBack: () => void;
   onDelete: (id: number) => Promise<void>;
+  onEdit: (recipe: RecipeFull) => void;
 }
 
-const RecipeViewer: React.FC<RecipeViewerProps> = ({ recipe, dishName, onBack, onDelete }) => {
+const RecipeViewer: React.FC<RecipeViewerProps> = ({ recipe, dishName, onBack, onDelete, onEdit }) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleAction = async (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-
     if (!isDeleting) {
       setIsDeleting(true);
     } else {
@@ -22,7 +21,6 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({ recipe, dishName, onBack, o
         try {
           await onDelete(recipe.id);
         } catch (err) {
-          console.error("Delete failed:", err);
           setIsDeleting(false);
         }
       }
@@ -40,6 +38,15 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({ recipe, dishName, onBack, o
         </button>
         
         <div className="flex gap-2">
+          {!isDeleting && (
+            <button 
+              onClick={() => onEdit(recipe)}
+              className="text-[10px] border border-[#FFA500]/40 text-[#FFA500] px-3 py-1 uppercase font-bold hover:bg-[#FFA500] hover:text-black transition-all"
+            >
+              Edit Recipe
+            </button>
+          )}
+
           {isDeleting && (
             <button 
               type="button"
