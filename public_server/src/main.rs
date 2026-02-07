@@ -3,11 +3,6 @@ mod database;
 mod handlers;
 mod models;
 
-use axum::{
-    routing::get,
-    Router,
-};
-
 #[tokio::main]
 async fn main() {
     let pool = database::create_pool().await;

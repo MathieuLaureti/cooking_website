@@ -107,7 +107,7 @@ async def delete_dish_by_id(dish_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"detail": "Dish deleted successfully"}
 
-@router.get("/searchList",response_model=List[models.DishSearch])
+@router.get("/dishes",response_model=List[models.DishSearch])
 def get_dish_list(db = Depends(get_db)):
     return db.execute(select(Dish.id,Dish.name)).mappings().all()
 
@@ -116,7 +116,7 @@ def manual_new_recipe(payload: models.RecipeFull, dish_id: int, db: Session = De
     """Manually post a JSON recipe."""
     return _create_recipe_in_db(payload, dish_id, db)
 
-@router.get("/recipe_list/{dish_id}")
+@router.get("/recipes/{dish_id}")
 def get_recipe_list_of_dish(dish_id: int,db = Depends(get_db)):
     return db.execute(select(Recipe.id,Recipe.name).where(Recipe.dish_id==dish_id)).mappings().all()
 

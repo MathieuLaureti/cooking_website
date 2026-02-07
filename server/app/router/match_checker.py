@@ -8,11 +8,11 @@ from typing import List
 
 router = APIRouter(prefix="/match_checker", tags=["Match Checker"])
 
-@router.get("/ingredient_list",response_model=List[match_checker.MatchCheckerShort])
+@router.get("/ingredients",response_model=List[match_checker.MatchCheckerShort])
 def get_ingredient_list(db: Session = Depends(get_db)):
     return db.execute(select(MatchChecker.id,MatchChecker.title)).mappings().all()
     
-@router.get("/get_ingredient/{id}", response_model=match_checker.MatchCheckerFull)
+@router.get("/ingredient/{id}", response_model=match_checker.MatchCheckerFull)
 def get_ingredient_by_id(id: int, db: Session = Depends(get_db)):
     result = db.execute(select(MatchChecker).where(MatchChecker.id == id)).scalar_one_or_none()
     if not result:

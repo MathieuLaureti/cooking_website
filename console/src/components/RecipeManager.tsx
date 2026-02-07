@@ -32,12 +32,12 @@ const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> 
     } 
   }, [isActive]);
   
-  const fetchDishes = () => axios.get(`${API_BASE}/searchList`).then(res => setDishes(res.data));
+  const fetchDishes = () => axios.get(`${API_BASE}/dishes`).then(res => setDishes(res.data));
   useEffect(() => { fetchDishes(); }, []);
 
   const handleDishSelect = async (dish: DishSearch) => {
     setSelectedDish(dish); setSearchTerm('');
-    const res = await axios.get(`${API_BASE}/recipe_list/${dish.id}`);
+    const res = await axios.get(`${API_BASE}/recipes/${dish.id}`);
     setRecipes(Array.isArray(res.data) ? res.data : []);
   };
 

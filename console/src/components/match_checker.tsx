@@ -17,13 +17,13 @@ const IngredientMatchChecker: React.FC<{isActive: boolean, onSearchTrigger: () =
     const [loading, setLoading] = useState(false);
 
     useEffect(() => { if (!isActive) { setSelectedIngredient(null); setSearchTerm(''); } }, [isActive]);
-    useEffect(() => { axios.get(`${API_BASE}/ingredient_list`).then(res => setIngredients(res.data)); }, []);
+    useEffect(() => { axios.get(`${API_BASE}/ingredients`).then(res => setIngredients(res.data)); }, []);
 
     const handleSelect = async (ing: MatchCheckerShort) => {
         setLoading(true); 
         setSearchTerm(ing.title);
         try {
-            const res = await axios.get<MatchCheckerFull>(`${API_BASE}/get_ingredient/${ing.id}`);
+            const res = await axios.get<MatchCheckerFull>(`${API_BASE}/ingredient/${ing.id}`);
             setSelectedIngredient(res.data);
         } finally { setLoading(false); }
     };

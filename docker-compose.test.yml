@@ -1,0 +1,52 @@
+services:
+  timescale:
+    container_name: cw_db_test
+    image: timescale/timescaledb:2.23.1-pg17
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      PGPORT: 6667
+    ports:
+      - 6667:6667
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -p 6667 -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  python_api:
+    container_name: cw_fastapi_baseline
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@timescale:6667/${DB_NAME}
+    ports:
+      - 6666:6666
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    depends_on:
+      timescale:
+        condition: service_healthy
+
+  rust_api:
+    container_name: cw_axum_test
+    build:
+      context: ./public_server
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@timescale:6667/${DB_NAME}
+    ports:
+      - 6668:6668
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0' 
+          memory: 512M 
+    depends_on:
+      timescale:
+        condition: service_healthy
