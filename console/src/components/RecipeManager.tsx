@@ -4,7 +4,7 @@ import { API_BASE, type DishSearch, type RecipeFull } from './types';
 import RecipeDraftForm from './RecipeDraftForm';
 import RecipeViewer from './RecipeViewer';
 
-const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> = ({ isActive, onSearchTrigger }) => {
+const RecipeManager: React.FC<{ isActive: boolean, onSearchTrigger: () => void }> = ({ isActive, onSearchTrigger }) => {
   const [dishes, setDishes] = useState<DishSearch[]>([]);
   const [selectedDish, setSelectedDish] = useState<DishSearch | null>(null);
   const [recipes, setRecipes] = useState<DishSearch[]>([]);
@@ -15,23 +15,23 @@ const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> 
   const [newDishName, setNewDishName] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
 
-  const emptyRecipe = (dishId: number): RecipeFull => ({ 
-    id: 0, 
-    name: '', 
-    dish_id: dishId, 
-    components: [] 
+  const emptyRecipe = (dishId: number): RecipeFull => ({
+    id: 0,
+    name: '',
+    dish_id: dishId,
+    components: []
   });
 
   const [formRecipe, setFormRecipe] = useState<RecipeFull>(emptyRecipe(0));
 
-  useEffect(() => { 
-    if (!isActive) { 
-      setSelectedRecipe(null); setSelectedDish(null); 
-      setIsCreatingRecipe(false); setIsCreatingDish(false); 
-      setSearchTerm(''); 
-    } 
+  useEffect(() => {
+    if (!isActive) {
+      setSelectedRecipe(null); setSelectedDish(null);
+      setIsCreatingRecipe(false); setIsCreatingDish(false);
+      setSearchTerm('');
+    }
   }, [isActive]);
-  
+
   const fetchDishes = () => axios.get(`${API_BASE}/dishes`).then(res => setDishes(res.data));
   useEffect(() => { fetchDishes(); }, []);
 
@@ -74,7 +74,7 @@ const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> 
       handleDishSelect(selectedDish);
       setIsCreatingRecipe(false);
       setSelectedRecipe(res.data);
-    } catch (e) { 
+    } catch (e) {
       alert("AI EXTRACTION ERROR.");
     } finally { setAiLoading(false); }
   };
@@ -85,8 +85,8 @@ const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> 
   }, [dishes, recipes, selectedDish, searchTerm]);
 
   if (isCreatingRecipe) return (
-    <RecipeDraftForm 
-      formRecipe={formRecipe} setFormRecipe={setFormRecipe} 
+    <RecipeDraftForm
+      formRecipe={formRecipe} setFormRecipe={setFormRecipe}
       aiLoading={aiLoading} onAiUpload={handleAiUpload}
       onClose={() => {
         setIsCreatingRecipe(false);
@@ -107,11 +107,11 @@ const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> 
 
   return (
     <div className="bg-[#4A594D] mx-auto font-sans text-[#F7F5F2]">
-      <div className="mb-4 bg-[#374239] rounded overflow-hidden">
+      <div className="mb-4 bg-[#374239] rounded ">
         <div className="flex items-center justify-between p-2 px-4 border-b border-white/5 bg-black/20">
           <div className="flex items-center gap-3">
             {selectedDish && !selectedRecipe && (
-              <button 
+              <button
                 onClick={() => { setSelectedDish(null); setRecipes([]); setSearchTerm(''); }}
                 className="text-[#5E7161] hover:text-white transition-colors flex items-center group"
               >
@@ -129,10 +129,10 @@ const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> 
               </button>
             )}
             {selectedDish && !selectedRecipe && (
-              <button onClick={() => { 
+              <button onClick={() => {
                 setFormRecipe(emptyRecipe(selectedDish.id));
-                setIsCreatingRecipe(true); 
-                onSearchTrigger(); 
+                setIsCreatingRecipe(true);
+                onSearchTrigger();
               }} className="bg-[#FFA500] text-black px-2 py-0.5 font-bold uppercase text-[9px]">+ Create Recipe</button>
             )}
           </div>
@@ -142,10 +142,10 @@ const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> 
           <div className="p-4 flex gap-2">
             <input autoFocus className="flex-1 bg-[#4A594D] p-3 outline-none text-sm border-b border-[#FFA500]" placeholder="New dish name..." value={newDishName} onChange={e => setNewDishName(e.target.value)} />
             <button onClick={async () => {
-               const res = await axios.post(`${API_BASE}/dish`, { name: newDishName });
-               await fetchDishes();
-               handleDishSelect({ id: res.data.id, name: res.data.name });
-               setNewDishName(''); setIsCreatingDish(false);
+              const res = await axios.post(`${API_BASE}/dish`, { name: newDishName });
+              await fetchDishes();
+              handleDishSelect({ id: res.data.id, name: res.data.name });
+              setNewDishName(''); setIsCreatingDish(false);
             }} className="bg-[#FFA500] text-black px-4 font-bold text-xs uppercase">Add</button>
           </div>
         ) : (
@@ -162,10 +162,10 @@ const RecipeManager: React.FC<{isActive: boolean, onSearchTrigger: () => void}> 
       </div>
 
       {selectedRecipe && (
-        <RecipeViewer 
-          recipe={selectedRecipe} 
-          dishName={selectedDish?.name} 
-          onBack={() => setSelectedRecipe(null)} 
+        <RecipeViewer
+          recipe={selectedRecipe}
+          dishName={selectedDish?.name}
+          onBack={() => setSelectedRecipe(null)}
           onDelete={handleDeleteRecipe}
           onEdit={(recipe) => {
             setFormRecipe(recipe);

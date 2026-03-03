@@ -11,6 +11,9 @@ services:
       - 6665:6665
     volumes:
       - ./console:/app
+    networks:
+      - cw_network
+
   server:
     container_name: cw_server
     image: cw_server_container
@@ -23,6 +26,9 @@ services:
       - 6666:6666
     volumes:
       - ./server:/code
+    networks:
+      - cw_network
+
   public_server:
     container_name: cw_rust_api
     build:
@@ -37,6 +43,14 @@ services:
     depends_on:
       timescale:
         condition: service_healthy
+    networks:
+      - cw_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:6668/ | grep -q 'Hello, World!' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
 
   timescale:
     container_name: cw_db
@@ -59,7 +73,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      
+    networks:
+      - cw_network
+
   nginx:
     container_name: cw_nginx
     image: cw_nginx_container
@@ -71,6 +87,15 @@ services:
     ports:
       - 80:80
       - 443:443
+    networks:
+      - cw_network
+    depends_on:
+      public_server:
+        condition: service_healthy
+
+networks:
+  cw_network:
+    driver: bridge
 
 volumes:
   cw_data:

@@ -1,6 +1,9 @@
 server {
     listen 80 default_server;
     server_name _;
+
+    resolver 127.0.0.11 valid=30s;
+
     location / {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header Host $host;
@@ -27,7 +30,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header Host $host;
         proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "Upgrade";
+        proxy_set_header Connection "Upgrade"; 
         proxy_pass http://public_server:6668;
         proxy_http_version 1.1;
         proxy_read_timeout 300;

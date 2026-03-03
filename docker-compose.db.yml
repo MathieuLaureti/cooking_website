@@ -1,0 +1,21 @@
+services:
+  timescale:
+    container_name: cw_db_test
+    image: timescale/timescaledb:2.23.1-pg17
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${TEST_DB_NAME}
+      PGPORT: 6667
+    ports:
+      - 6667:6667
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -p 6667 -d ${TEST_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  default:
+    name: cw_shared_net
+    external: true

@@ -13,7 +13,7 @@ RUN cargo build --release
 
 # 2 : Runtime stage
 FROM debian:bookworm-slim
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates curl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=builder /app/target/release/public_server /app/rust_api
 EXPOSE 6668
