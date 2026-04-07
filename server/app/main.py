@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from app.router import match_checker, recipes
 
-app = FastAPI(root_path="/api")
+app = FastAPI()
 
 app.include_router(match_checker.router)
 app.include_router(recipes.router)
 
-@app.get("/")
+
+@app.get("/health")
 def read_root():
-    return {"Message": "Hello World"}
+    return "Hello World"

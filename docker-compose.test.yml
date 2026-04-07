@@ -21,13 +21,16 @@ services:
       context: ./server
       dockerfile: Dockerfile.test
     environment:
-      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@timescale:6667/${TEST_DB_NAME}
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@timescale:6667/${TEST_DB_NAME}
     ports:
       - 6666:6666
+    volumes:
+      - ./server:/code
+    #cpuset: "0"
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
     depends_on:
       timescale:
@@ -42,11 +45,12 @@ services:
       - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@timescale:6667/${TEST_DB_NAME}
     ports:
       - 6668:6668
+    #cpuset: "1"
     deploy:
       resources:
         limits:
-          cpus: '1.0' 
-          memory: 512M 
+          cpus: "1.0"
+          memory: 512M
     depends_on:
       timescale:
         condition: service_healthy
@@ -60,10 +64,11 @@ services:
       - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@timescale:6667/${TEST_DB_NAME}
     ports:
       - 6669:6669
+    #cpuset: "2"
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
     depends_on:
       timescale:

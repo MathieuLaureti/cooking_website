@@ -1,39 +1,56 @@
 # app/database.py
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    async_sessionmaker,
+    AsyncSession,
+)
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.engine import URL
 
-url = URL.create(
-    drivername="postgresql+psycopg",
-    username=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD"),
-    host=os.getenv("DB_HOST"),
-    port=6667,
-    database=os.getenv("DB_NAME"),
-)
+raw_url = os.getenv("DATABASE_URL")
 
-engine = create_engine(
-    url,
-    pool_pre_ping=True,
+if raw_url:
+    if raw_url.startswith("postgres://"):
+        db_url = raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif raw_url.startswith("postgresql://"):
+        db_url = raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    else:
+        db_url = raw_url
+else:
+    # Fallback construction
+    user = os.getenv("DB_USER")
+    pw = os.getenv("DB_PASSWORD")
+    host = os.getenv("DB_HOST", "timescale")
+    port = os.getenv("DB_PORT", "6667")
+    name = os.getenv("DB_NAME", "db")
+    db_url = f"postgresql+asyncpg://{user}:{pw}@{host}:{port}/{name}"
+
+engine = create_async_engine(
+    db_url,
+    pool_size=20,
+    max_overflow=10,
+    pool_recycle=3600,
     future=True,
 )
 
-SessionLocal = sessionmaker(
+AsyncSessionLocal = async_sessionmaker(
     bind=engine,
+    class_=AsyncSession,
     autoflush=False,
     autocommit=False,
     expire_on_commit=False,
-    future=True,
 )
+
 
 class Base(DeclarativeBase):
     pass
 
-# FastAPI dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+
+async def get_db():
+    async with AsyncSessionLocal() as db:
+        try:
+            yield db
+        finally:
+            # Context manager handles close() automatically
+            pass

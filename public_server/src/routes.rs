@@ -4,7 +4,7 @@ use crate::handlers;
 
 pub fn create_router(pool: PgPool) -> Router {
     Router::new()
-        .route("/", get(|| async { "Hello, World!" }))
+        .route("/health", get(|| async { "Hello World" }))
         .route("/recipes/dishes", get(handlers::get_dishes))
         .route("/recipes/recipes/:dish_id", get(handlers::get_recipes))
         .route("/recipes/recipe/:recipe_id", get(handlers::get_full_recipe))

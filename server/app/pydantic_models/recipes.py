@@ -1,34 +1,48 @@
 from pydantic import BaseModel
 from typing import List
 
+
 class DishBase(BaseModel):
-    name:str
+    name: str
+
     class Config:
         from_attributes = True
 
+
 class DishSearch(DishBase):
-    id:int
+    id: int
+
 
 class Instruction(BaseModel):
-    step:int
-    text:str
+    step: int
+    text: str
+
 
 class Ingredient(BaseModel):
-    name:str
-    quantity:str
-    unit:str
+    name: str
+    quantity: str
+    unit: str
+
 
 class Recipe(BaseModel):
-    dish_id:int
-    name:str 
-       
+    dish_id: int
+    name: str
+
+
 class RecipeSearch(Recipe):
-    id:int
+    id: int
+
 
 class Component(BaseModel):
-    name:str
+    name: str
     instructions: List[Instruction]
     ingredients: List[Ingredient]
 
-class RecipeFull(RecipeSearch):
-    components: List[Component]  
+
+class RecipeFull(Recipe):
+    id: int
+    components: List[Component]
+
+
+class RecipeCreate(Recipe):
+    components: List[Component]
