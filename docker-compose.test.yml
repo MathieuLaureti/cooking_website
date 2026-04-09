@@ -30,8 +30,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1.0"
-          memory: 512M
+          #cpus: "1.0"
+          memory: 8G
     depends_on:
       timescale:
         condition: service_healthy
@@ -49,8 +49,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1.0"
-          memory: 512M
+          #cpus: "1.0"
+          memory: 8G
     depends_on:
       timescale:
         condition: service_healthy
@@ -68,8 +68,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1.0"
-          memory: 512M
+          #cpus: "1.0"
+          memory: 8G
     depends_on:
       timescale:
         condition: service_healthy

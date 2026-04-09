@@ -68,23 +68,15 @@ def run_stress_test(test_name, container_name, tool_command, iteration):
     print(f"Data captured and saved to {folder_path}/raw_docker_metrics.json\n")
 
 
-def hey_full_test(iteration):
+def hey_full_test(iteration, services):
     test_name = "hey_200000_100"
     command = "hey -n 200000 -c 100 -o csv"
-    services = [
-        {"name": "fastapi", "port": 6666},
-        {"name": "axum", "port": 6668},
-        {"name": "custom", "port": 6669},
-    ]
-
     for service in services:
         target_url = f"http://localhost:{service['port']}/health"
-        # We redirect stdout to a json file in the tool_command string
         json_path = (
             f"test_results/{test_name}/{iteration}/{service['name']}/test_details.csv"
         )
 
-        # Ensure the directory exists before hey runs
         os.makedirs(os.path.dirname(json_path), exist_ok=True)
 
         full_cmd = f"{command} {target_url} > {json_path}"
@@ -97,22 +89,14 @@ def hey_full_test(iteration):
         )
 
 
-def hey_full_stress_test(iteration):
-    test_name = "hey_10m_1k"
-    command = "hey -n 10000000 -c 1000 -o csv"
-    services = [
-        {"name": "axum", "port": 6668},
-        {"name": "custom", "port": 6669},
-    ]
-
+def hey_full_stress_test(iteration, services):
+    test_name = "hey_2m_1k"
+    command = "hey -n 2000000 -c 1000 -o csv"
     for service in services:
         target_url = f"http://localhost:{service['port']}/health"
-        # We redirect stdout to a json file in the tool_command string
         json_path = (
             f"test_results/{test_name}/{iteration}/{service['name']}/test_details.csv"
         )
-
-        # Ensure the directory exists before hey runs
         os.makedirs(os.path.dirname(json_path), exist_ok=True)
 
         full_cmd = f"{command} {target_url} > {json_path}"
@@ -125,7 +109,7 @@ def hey_full_stress_test(iteration):
         )
 
 
-def locust_full_test(iteration):
+def locust_full_test(iteration, services):
     test_name = "locust_v_1_0_0"
     # Configuration for the stress test
     test_file = "locust_v_1.0.0.py"
@@ -135,12 +119,6 @@ def locust_full_test(iteration):
     users = 100
     spawn_rate = 20
     run_time = "30s"
-
-    services = [
-        {"name": "fastapi", "port": 6666},
-        {"name": "axum", "port": 6668},
-        {"name": "custom", "port": 6669},
-    ]
     for service in services:
         json_path = (
             f"test_results/{test_name}/{iteration}/{service['name']}/test_details.json"
@@ -162,16 +140,10 @@ def locust_full_test(iteration):
         )
 
 
-def k6_full_test(iteration):
+def k6_full_test(iteration, services):
     test_name = "k6_break_test"
     dish_count = 100
     recipe_count = 500
-
-    services = [
-        {"name": "cw_fastapi_baseline", "port": 6666},
-        {"name": "cw_custom_test", "port": 6669},
-        {"name": "cw_axum_test", "port": 6668},
-    ]
 
     for service in services:
         k6_cmd = (
@@ -194,7 +166,12 @@ def k6_full_test(iteration):
 
 if __name__ == "__main__":
     iteration = "1"
-    hey_full_stress_test(iteration)
-    locust_full_test(iteration)
-    hey_full_test(iteration)
-    k6_full_test(iteration)
+    services = [
+        {"name": "fastapi", "port": 6666},
+        # {"name": "custom", "port": 6669},
+        # {"name": "axum", "port": 6668},
+    ]
+    hey_full_stress_test(iteration, services)
+    locust_full_test(iteration, services)
+    hey_full_test(iteration, services)
+    k6_full_test(iteration, services)

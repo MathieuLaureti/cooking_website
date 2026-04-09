@@ -8,5 +8,5 @@ app.include_router(recipes.router)
 
 
 @app.get("/health")
-def read_root():
+async def read_root():
     return "Hello World"
