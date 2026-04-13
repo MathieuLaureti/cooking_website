@@ -1,5 +1,5 @@
 # 1 : Build stage
-FROM rust:1.84-slim as builder
+FROM rust:1.94-slim as builder
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs

@@ -35,6 +35,10 @@ services:
     depends_on:
       timescale:
         condition: service_healthy
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
 
   rust_api:
     container_name: cw_axum_test
@@ -54,6 +58,10 @@ services:
     depends_on:
       timescale:
         condition: service_healthy
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
 
   rust_custom_api:
     container_name: cw_custom_test
@@ -73,3 +81,13 @@ services:
     depends_on:
       timescale:
         condition: service_healthy
+  cache:
+    image: redis:7.4-alpine
+    container_name: cw_redis_test
+    ports:
+      - "6379:6379"
+    command: >
+      sh -c "redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru --save '' --appendonly no & 
+             sleep 2; 
+             redis-cli flushall; 
+             wait"

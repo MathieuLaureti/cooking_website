@@ -1,5 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List
+
+
+class OrmBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DishBase(BaseModel):
@@ -13,12 +17,12 @@ class DishSearch(DishBase):
     id: int
 
 
-class Instruction(BaseModel):
+class Instruction(OrmBase):
     step: int
     text: str
 
 
-class Ingredient(BaseModel):
+class Ingredient(OrmBase):
     name: str
     quantity: str
     unit: str
@@ -33,14 +37,16 @@ class RecipeSearch(Recipe):
     id: int
 
 
-class Component(BaseModel):
+class Component(OrmBase):
     name: str
     instructions: List[Instruction]
     ingredients: List[Ingredient]
 
 
-class RecipeFull(Recipe):
+class RecipeFull(OrmBase):
     id: int
+    name: str
+    dish_id: int
     components: List[Component]
 
 

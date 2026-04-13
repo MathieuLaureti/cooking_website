@@ -3,17 +3,23 @@ import { sleep, check } from 'k6';
 
 export const options = {
   stages: [
-    { duration: '1m', target: 100 },   // Warm up
-    { duration: '2m', target: 500 },   // Initial pressure
-    { duration: '3m', target: 2000 },  // High load (Axum territory) (Python Breaking Territory)
-    { duration: '4m', target: 10000 }, // Rust Breaking terriory
-    { duration: '10m', target: 50000 }, // Force Breaking
+    { duration: '30s', target: 100 },   // Warm up
+    { duration: '1m', target: 500 },   // Initial pressure
+    { duration: '2m', target: 10000 }, // Rust Breaking terriory
+    { duration: '5m', target: 50000 }, // Force Breaking
   ],
   thresholds: {
-    // ABORT the test if the error rate exceeds 10%
-    http_req_failed: [{ threshold: 'rate<0.1', abortOnFail: true }],
-    // ABORT the test if 95% of requests take more than 1500ms
-    http_req_duration: [{ threshold: 'p(95)<1500', abortOnFail: true }],
+    // Abort if the error rate in the CURRENT sample window exceeds 10%
+    'http_req_failed': [{
+      threshold: 'rate < 0.005',
+      abortOnFail: true,
+      delayAbortEval: '0s'
+    }],
+    // Abort if the 95th percentile of the LAST 10 seconds exceeds 1500ms
+    'http_req_duration{expected_response:true}': [{
+      threshold: 'p(95) < 1500',
+      abortOnFail: true
+    }],
   },
 };
 

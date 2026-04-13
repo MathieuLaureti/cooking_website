@@ -5,6 +5,7 @@ from fastapi import (
     status,
     Query,
 )
+import orjson
 from sqlalchemy.orm import Session
 from app.database import get_db
 from sqlalchemy import select
@@ -12,9 +13,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.db_models.models import Dish, Recipe, RecipeComponent, Ingredient, Instruction
 from app.pydantic_models import recipes as models
-from typing import List
+from typing import List, Any, Callable, Awaitable
 from ..scripts.APRWS import WebRecipeExtractor
 from ..scripts.APRIR import ImageRecipeExtractor
+from ..cache import cache
+import json
 
 router = APIRouter(prefix="/recipes", tags=[""])
 
@@ -63,7 +66,7 @@ async def _create_recipe_in_db(
 
     db.add(new_recipe)
     await db.commit()
-
+    await cache.delete(f"dish_recipes:{dish_id}")
     # Eager load relationships before returning to prevent lazy load errors during serialization
     stmt = (
         select(Recipe)
@@ -144,6 +147,20 @@ async def delete_dish_by_id(dish_id: int, db: AsyncSession = Depends(get_db)):
     return {"detail": "Dish deleted successfully"}
 
 
+async def fetch_with_cache(
+    cache_key: str, ttl: int, fetch_func: Callable[[], Awaitable[Any]]
+) -> Any:
+    """Handles cache-aside pattern to reduce boilerplate and prevent sync blocking."""
+    cached = await cache.get(cache_key)
+    if cached:
+        return orjson.loads(cached)
+
+    data = await fetch_func()
+    # orjson.dumps returns bytes, which Redis async client handles natively
+    await cache.setex(cache_key, ttl, orjson.dumps(data))
+    return data
+
+
 @router.post("/recipe/{dish_id}", response_model=models.RecipeFull)
 async def manual_new_recipe(
     payload: models.RecipeCreate, dish_id: int, db: AsyncSession = Depends(get_db)
@@ -153,37 +170,49 @@ async def manual_new_recipe(
 
 @router.get("/dishes", response_model=List[models.DishSearch])
 async def get_dish_list(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Dish.id, Dish.name))
-    return result.mappings().all()
+    async def fetch_data():
+        result = await db.execute(select(Dish.id, Dish.name))
+        return [dict(r) for r in result.mappings().all()]
+
+    return await fetch_with_cache("dishes:all", 3600, fetch_data)
 
 
 @router.get("/recipes/{dish_id}")
 async def get_recipe_list_of_dish(dish_id: int, db: AsyncSession = Depends(get_db)):
-    stmt = select(Recipe.id, Recipe.name).where(Recipe.dish_id == dish_id)
-    result = await db.execute(stmt)
-    return result.mappings().all()
+    async def fetch_data():
+        stmt = select(Recipe.id, Recipe.name).where(Recipe.dish_id == dish_id)
+        result = await db.execute(stmt)
+        return [dict(r) for r in result.mappings().all()]
+
+    return await fetch_with_cache(f"dish_recipes:{dish_id}", 3600, fetch_data)
 
 
 @router.get("/recipe/{recipe_id}", response_model=models.RecipeFull)
 async def get_recipe_by_id(recipe_id: int, db: AsyncSession = Depends(get_db)):
-    stmt = (
-        select(Recipe)
-        .where(Recipe.id == recipe_id)
-        .options(
-            selectinload(Recipe.components).selectinload(RecipeComponent.instructions),
-            selectinload(Recipe.components).selectinload(RecipeComponent.ingredients),
+    async def fetch_data():
+        stmt = (
+            select(Recipe)
+            .where(Recipe.id == recipe_id)
+            .options(
+                selectinload(Recipe.components).selectinload(
+                    RecipeComponent.instructions
+                ),
+                selectinload(Recipe.components).selectinload(
+                    RecipeComponent.ingredients
+                ),
+            )
         )
-    )
+        result = await db.execute(stmt)
+        recipe = result.scalar_one_or_none()
 
-    result = await db.execute(stmt)
-    recipe = result.scalar_one_or_none()
+        if not recipe:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Recipe not found",
+            )
+        return models.RecipeFull.model_validate(recipe).model_dump()
 
-    if not recipe:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Recipe not found",
-        )
-    return recipe
+    return await fetch_with_cache(f"full_recipe:{recipe_id}", 3600, fetch_data)
 
 
 OLLAMA_BASE = "http://192.168.2.99:11434/api/generate"
