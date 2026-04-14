@@ -46,7 +46,11 @@ services:
     networks:
       - cw_network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://127.0.0.1:6668/ | grep -q 'Hello, World!' || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -f http://127.0.0.1:6668/ | grep -q 'Hello, World!' || exit 1",
+        ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -93,10 +97,22 @@ services:
       public_server:
         condition: service_healthy
 
+  cache:
+    image: redis:7.4-alpine
+    container_name: cw_redis
+    ports:
+      - "6379:6379"
+    command: >
+      sh -c "redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru --save '' --appendonly no & 
+             sleep 2; 
+             redis-cli flushall; 
+             wait"
+    networks:
+      - cw_network
+
 networks:
   cw_network:
     driver: bridge
 
 volumes:
   cw_data:
-
