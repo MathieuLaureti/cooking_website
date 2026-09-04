@@ -26,10 +26,10 @@ browser
 
 ## Request flow
 
-1. UI `axios` call to `/api/match_checker/...` or `/api/recipes/...`.
-2. nginx `location ^~ /api/` → `http://server:6666/` (dev: `nginx/default.dev.conf`; prod: `nginx/default.conf`). In the Vite container, `console/vite.config.ts` also rewrites `/api` when the console is hit directly.
-3. FastAPI router in `server/app/router/match_checker.py` or `server/app/router/recipes.py`.
-4. Async SQLAlchemy session (`server/app/database.py`) and, for some recipe GETs, Redis (`server/app/cache.py`). URL import uses Playwright then Ollama (`server/app/scripts/APRWS.py`).
+1. UI `apiClient` call to `/api/...` with `Authorization: Bearer <token>` (except login/register).
+2. nginx `location ^~ /api/` → `http://server:6666/` (dev: `nginx/default.dev.conf`; prod: `nginx/default.conf`).
+3. FastAPI router decodes JWT from the Bearer header (`server/app/auth.py`) — no DB hit on authenticated reads.
+4. Async SQLAlchemy session for data access; Redis cache on some recipe GETs.
 
 ## Boundaries
 
@@ -37,4 +37,6 @@ browser
 - Server does not serve the React app.
 - Nginx does not interpret JSON; it only routes.
 - Match-checker data is read-only over HTTP (no create/update/delete routes).
-- There is no auth on any route.
+- **All content routes require a valid JWT.** Only `/health`, `POST /auth/login`, and `POST /auth/register` are public.
+- Admin-only routes (recipe mutations, AI import, registration code) check `role == "admin"` from the JWT.
+- Registration codes are HMAC-derived from `JWT_SECRET` + minute bucket — no session store or Redis for auth.

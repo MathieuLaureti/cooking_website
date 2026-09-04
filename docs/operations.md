@@ -37,6 +37,10 @@ From `.env.example` (do not commit real `.env` values):
 | `OLLAMA_URL` | recipe URL (and unused image) extractors |
 | `MODEL_NAME` | present in env; URL extractor currently hardcodes `qwen2.5:7b` |
 | `IMAGE_MODEL_NAME` | present in env; image extractor currently hardcodes `llama3.2-vision:11b` |
+| `JWT_SECRET` | JWT signing + registration code HMAC (required in prod) |
+| `JWT_EXPIRE_MINUTES` | Token TTL; default `10080` (7 days) |
+| `ADMIN_USERNAME` | Bootstrap first admin when `user` table is empty |
+| `ADMIN_PASSWORD` | Bootstrap password for first admin |
 
 `DATABASE_URL` is optional in `server/app/database.py`; if unset, the URL is built from the `DB_*` vars. Driver is `postgresql+asyncpg`. Redis URL is hardcoded `redis://cache:6379/0`.
 

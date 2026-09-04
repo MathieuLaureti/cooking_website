@@ -2,30 +2,31 @@
 
 ## What it does
 
-Catalog of **dishes**, each with one or more **recipes**. A recipe is a list of **components** (named sections), each with ingredients (`name`, `quantity` string, `unit`) and numbered instructions. Recipes can be typed in, edited, deleted, or imported by scraping a URL through Ollama.
+Catalog of **dishes**, each with one or more **recipes**. A recipe is a list of **components** (named sections), each with ingredients (`name`, `quantity` string, `unit`) and numbered instructions. Requires login. Only **admins** can create, edit, delete, or import via AI.
 
 ## User flow
 
-1. Load dish list; search filters dishes; “+ New Dish” posts a name.
-2. Select a dish → list that dish’s recipes; “+ Create Recipe” opens the draft form.
-3. Draft form: optional URL scrape, then edit title / components / ingredients / steps and submit (create or edit).
-4. Select a recipe → viewer with edit and two-step delete.
+1. Sign in (see [auth](auth.md)).
+2. Load dish list; search filters dishes.
+3. **Admin only**: “+ New Dish” posts a name; “+ Create Recipe” opens the draft form.
+4. Select a dish → list that dish’s recipes.
+5. **Admin only**: draft form with optional URL scrape, edit, submit.
+6. Select a recipe → viewer. **Admin only**: edit and two-step delete.
 
 ## UI
 
-- `console/src/components/RecipeManager.tsx` — dish/recipe search, create dish, wire API.
-- `console/src/components/RecipeDraftForm.tsx` — form plus URL and image-upload affordances.
-- `console/src/components/RecipeViewer.tsx` — read view, edit, confirm delete.
-- Types: `console/src/components/types.ts` (`DishSearch`, `RecipeFull`, …). `API_BASE = '/api/recipes'`.
-- Client `Ingredient.quantity` is typed as `number`; the API stores `quantity` as a **string**.
+- `console/src/components/RecipeManager.tsx` — dish/recipe search; admin create controls gated by `isAdmin`.
+- `console/src/components/RecipeDraftForm.tsx` — form plus URL and image-upload affordances (admin only).
+- `console/src/components/RecipeViewer.tsx` — read view; edit/delete hidden for non-admins.
+- Types: `console/src/components/types.ts`. API calls via `console/src/api/client.ts` (`API_BASE = '/api/recipes'`).
 
 ## Backend
 
 - Router: `server/app/router/recipes.py`.
-- Models: `Dish`, `Recipe`, `RecipeComponent`, `Ingredient`, `Instruction`.
-- Cache-aside (`server/app/cache.py`): `dishes:all`, `dish_recipes:{dish_id}`, `full_recipe:{recipe_id}` (1h). Create-recipe deletes `dish_recipes:{dish_id}` only.
-- URL import: `WebRecipeExtractor` in `server/app/scripts/APRWS.py` (Playwright → Ollama JSON → `_create_recipe_in_db`).
-- Image import class exists (`server/app/scripts/APRIR.py`) but has **no registered route**.
+- GET routes: any authenticated user (`Depends(get_current_user)`).
+- POST/PUT/DELETE + `GET /recipe_url`: admin only (`Depends(require_admin)`).
+- Cache-aside (`server/app/cache.py`): `dishes:all`, `dish_recipes:{dish_id}`, `full_recipe:{recipe_id}` (1h).
+- URL import: `WebRecipeExtractor` in `server/app/scripts/APRWS.py`.
 
 ## Data
 
@@ -34,8 +35,6 @@ See [data model](../data-model.md). Hierarchy: dish → recipe → recipe_compon
 ## Edge cases
 
 - Duplicate dish name → 400. Duplicate recipe name on the same dish → 400.
-- Delete dish is rejected while recipes exist; the console never calls delete-dish or rename-dish.
-- Console fetch-one-recipe uses `/recipe/{dishId}/{recipeId}`; server expects `/recipe/{recipe_id}` only.
-- Console posts `/recipe_image/{dish_id}`; that endpoint is not implemented (UI shows “AI EXTRACTION ERROR.”).
-- URL scrape can take tens of seconds; nginx read timeout is 300s. Failures return 500 with a string `detail`.
-- Stale Redis: new dishes may not appear until `dishes:all` expires; edited/deleted recipes can stay in `full_recipe:{id}` for up to an hour.
+- Non-admin API writes → 403.
+- Console posts `/recipe_image/{dish_id}`; that endpoint is not implemented.
+- URL scrape can take tens of seconds; nginx read timeout is 300s.

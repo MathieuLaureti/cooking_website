@@ -1,5 +1,5 @@
 import React, { useState, useEffect, type ChangeEvent } from 'react';
-import axios from 'axios';
+import { apiClient } from '../api/client';
 
 const API_BASE = '/api/match_checker';
 
@@ -17,13 +17,13 @@ const IngredientMatchChecker: React.FC<{isActive: boolean, onSearchTrigger: () =
     const [loading, setLoading] = useState(false);
 
     useEffect(() => { if (!isActive) { setSelectedIngredient(null); setSearchTerm(''); } }, [isActive]);
-    useEffect(() => { axios.get(`${API_BASE}/ingredients`).then(res => setIngredients(res.data)); }, []);
+    useEffect(() => { apiClient.get(`${API_BASE}/ingredients`).then(res => setIngredients(res.data)); }, []);
 
     const handleSelect = async (ing: MatchCheckerShort) => {
         setLoading(true); 
         setSearchTerm(ing.title);
         try {
-            const res = await axios.get<MatchCheckerFull>(`${API_BASE}/ingredient/${ing.id}`);
+            const res = await apiClient.get<MatchCheckerFull>(`${API_BASE}/ingredient/${ing.id}`);
             setSelectedIngredient(res.data);
         } finally { setLoading(false); }
     };

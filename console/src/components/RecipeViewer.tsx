@@ -4,12 +4,13 @@ import type { RecipeFull } from './types';
 interface RecipeViewerProps {
   recipe: RecipeFull;
   dishName?: string;
+  isAdmin: boolean;
   onBack: () => void;
   onDelete: (id: number) => Promise<void>;
   onEdit: (recipe: RecipeFull) => void;
 }
 
-const RecipeViewer: React.FC<RecipeViewerProps> = ({ recipe, dishName, onBack, onDelete, onEdit }) => {
+const RecipeViewer: React.FC<RecipeViewerProps> = ({ recipe, dishName, isAdmin, onBack, onDelete, onEdit }) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleAction = async (e: React.MouseEvent) => {
@@ -38,7 +39,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({ recipe, dishName, onBack, o
         </button>
         
         <div className="flex gap-2">
-          {!isDeleting && (
+          {isAdmin && !isDeleting && (
             <button 
               onClick={() => onEdit(recipe)}
               className="text-[10px] border border-[#FFA500]/40 text-[#FFA500] px-3 py-1 uppercase font-bold hover:bg-[#FFA500] hover:text-black transition-all"
@@ -47,7 +48,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({ recipe, dishName, onBack, o
             </button>
           )}
 
-          {isDeleting && (
+          {isAdmin && isDeleting && (
             <button 
               type="button"
               onClick={() => setIsDeleting(false)}
@@ -56,6 +57,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({ recipe, dishName, onBack, o
               Cancel
             </button>
           )}
+          {isAdmin && (
           <button 
             type="button"
             onClick={handleAction}
@@ -67,6 +69,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({ recipe, dishName, onBack, o
           >
             {isDeleting ? 'Confirm Delete?' : 'Delete Recipe'}
           </button>
+          )}
         </div>
       </div>
 

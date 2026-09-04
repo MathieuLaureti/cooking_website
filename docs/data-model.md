@@ -9,6 +9,8 @@ dish 1──* recipe 1──* recipe_component 1──* ingredient
                                    └────────* instruction
 
 match_checker   (independent)
+
+user            (independent — auth)
 ```
 
 ## Tables
@@ -81,6 +83,18 @@ match_checker   (independent)
 
 - Relationships: none.
 - Notes: created in `946b70e36b6f`. `matches` is a list of `[name, score]` pairs (score typically 1–4). Title is indexed, not unique.
+
+### `user`
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | integer | PK |
+| `username` | `varchar(64)` | unique, not null |
+| `password_hash` | `varchar(255)` | not null (bcrypt) |
+| `role` | `varchar(16)` | not null — `admin` or `user` |
+
+- Relationships: none.
+- Notes: added in `c3a8f1d92e04`. Passwords stored as bcrypt hashes. First admin bootstrapped from `ADMIN_USERNAME` / `ADMIN_PASSWORD` env vars when the table is empty.
 
 ## Legacy / seed
 

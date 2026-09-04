@@ -8,6 +8,7 @@ from fastapi import (
 import orjson
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.auth import TokenUser, get_current_user, require_admin
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -82,7 +83,11 @@ async def _create_recipe_in_db(
 
 
 @router.post("/dish", response_model=models.DishSearch)
-async def new_dish(dish: models.DishBase, db: AsyncSession = Depends(get_db)):
+async def new_dish(
+    dish: models.DishBase,
+    db: AsyncSession = Depends(get_db),
+    _admin: TokenUser = Depends(require_admin),
+):
     stmt = select(Dish).where(Dish.name == dish.name)
     result = await db.execute(stmt)
     if result.scalar_one_or_none():
@@ -104,7 +109,10 @@ async def new_dish(dish: models.DishBase, db: AsyncSession = Depends(get_db)):
 
 @router.put("/dish_edit/{dish_id}", response_model=models.DishSearch)
 async def edit_dish_by_id(
-    dish_id: int, dish: models.DishBase, db: AsyncSession = Depends(get_db)
+    dish_id: int,
+    dish: models.DishBase,
+    db: AsyncSession = Depends(get_db),
+    _admin: TokenUser = Depends(require_admin),
 ):
     stmt = select(Dish).where(Dish.id == dish_id)
     result = await db.execute(stmt)
@@ -123,7 +131,11 @@ async def edit_dish_by_id(
 
 
 @router.delete("/dish/{dish_id}")
-async def delete_dish_by_id(dish_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_dish_by_id(
+    dish_id: int,
+    db: AsyncSession = Depends(get_db),
+    _admin: TokenUser = Depends(require_admin),
+):
     # Check for dish
     stmt_dish = select(Dish).where(Dish.id == dish_id)
     res_dish = await db.execute(stmt_dish)
@@ -164,13 +176,19 @@ async def fetch_with_cache(
 
 @router.post("/recipe/{dish_id}", response_model=models.RecipeFull)
 async def manual_new_recipe(
-    payload: models.RecipeCreate, dish_id: int, db: AsyncSession = Depends(get_db)
+    payload: models.RecipeCreate,
+    dish_id: int,
+    db: AsyncSession = Depends(get_db),
+    _admin: TokenUser = Depends(require_admin),
 ):
     return await _create_recipe_in_db(payload, dish_id, db)
 
 
 @router.get("/dishes", response_model=List[models.DishSearch])
-async def get_dish_list(db: AsyncSession = Depends(get_db)):
+async def get_dish_list(
+    db: AsyncSession = Depends(get_db),
+    _user: TokenUser = Depends(get_current_user),
+):
     async def fetch_data():
         result = await db.execute(select(Dish.id, Dish.name))
         return [dict(r) for r in result.mappings().all()]
@@ -179,7 +197,11 @@ async def get_dish_list(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/recipes/{dish_id}")
-async def get_recipe_list_of_dish(dish_id: int, db: AsyncSession = Depends(get_db)):
+async def get_recipe_list_of_dish(
+    dish_id: int,
+    db: AsyncSession = Depends(get_db),
+    _user: TokenUser = Depends(get_current_user),
+):
     async def fetch_data():
         stmt = select(Recipe.id, Recipe.name).where(Recipe.dish_id == dish_id)
         result = await db.execute(stmt)
@@ -189,7 +211,11 @@ async def get_recipe_list_of_dish(dish_id: int, db: AsyncSession = Depends(get_d
 
 
 @router.get("/recipe/{recipe_id}", response_model=models.RecipeFull)
-async def get_recipe_by_id(recipe_id: int, db: AsyncSession = Depends(get_db)):
+async def get_recipe_by_id(
+    recipe_id: int,
+    db: AsyncSession = Depends(get_db),
+    _user: TokenUser = Depends(get_current_user),
+):
     async def fetch_data():
         stmt = (
             select(Recipe)
@@ -225,7 +251,10 @@ img_tool = ImageRecipeExtractor(OLLAMA_URL, "llama3.2-vision:11b")
 
 @router.get("/recipe_url/{dish_id}", response_model=models.RecipeFull)
 async def get_recipe_by_url(
-    dish_id: int, url: str = Query(...), db: AsyncSession = Depends(get_db)
+    dish_id: int,
+    url: str = Query(...),
+    db: AsyncSession = Depends(get_db),
+    _admin: TokenUser = Depends(require_admin),
 ):
     try:
         data = await web_tool.extract(url, dish_id)
@@ -235,7 +264,11 @@ async def get_recipe_by_url(
 
 
 @router.delete("/recipe/{recipe_id}")
-async def delete_recipe_by_id(recipe_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_recipe_by_id(
+    recipe_id: int,
+    db: AsyncSession = Depends(get_db),
+    _admin: TokenUser = Depends(require_admin),
+):
     stmt = select(Recipe).where(Recipe.id == recipe_id)
     result = await db.execute(stmt)
     recipe_exist = result.scalar_one_or_none()
@@ -252,7 +285,10 @@ async def delete_recipe_by_id(recipe_id: int, db: AsyncSession = Depends(get_db)
 
 @router.put("/recipe_edit/{recipe_id}", response_model=models.RecipeFull)
 async def edit_recipe_by_id(
-    payload: models.RecipeFull, recipe_id: int, db: AsyncSession = Depends(get_db)
+    payload: models.RecipeFull,
+    recipe_id: int,
+    db: AsyncSession = Depends(get_db),
+    _admin: TokenUser = Depends(require_admin),
 ):
     # Fetch with components to allow clearing the collection
     stmt = (

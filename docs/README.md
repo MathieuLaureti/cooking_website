@@ -4,8 +4,9 @@ Personal cooking console: ingredient pairings (match checker) and a dish/recipe 
 
 ## Features
 
+- [Authentication](features/auth.md) — login required, admin registration codes, roles
 - [Match checker](features/match-checker.md) — look up ingredient affinities, avoids, and pairing scores
-- [Recipes](features/recipes.md) — dishes, recipes, components, and URL import
+- [Recipes](features/recipes.md) — dishes, recipes, components, and URL import (admin only)
 
 ## System
 

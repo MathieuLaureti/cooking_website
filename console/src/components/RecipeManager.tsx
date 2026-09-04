@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import { apiClient } from '../api/client';
 import { API_BASE, type DishSearch, type RecipeFull } from './types';
 import RecipeDraftForm from './RecipeDraftForm';
 import RecipeViewer from './RecipeViewer';
 
-const RecipeManager: React.FC<{ isActive: boolean, onSearchTrigger: () => void }> = ({ isActive, onSearchTrigger }) => {
+const RecipeManager: React.FC<{ isActive: boolean, onSearchTrigger: () => void, isAdmin: boolean }> = ({ isActive, onSearchTrigger, isAdmin }) => {
   const [dishes, setDishes] = useState<DishSearch[]>([]);
   const [selectedDish, setSelectedDish] = useState<DishSearch | null>(null);
   const [recipes, setRecipes] = useState<DishSearch[]>([]);
@@ -32,26 +32,26 @@ const RecipeManager: React.FC<{ isActive: boolean, onSearchTrigger: () => void }
     }
   }, [isActive]);
 
-  const fetchDishes = () => axios.get(`${API_BASE}/dishes`).then(res => setDishes(res.data));
+  const fetchDishes = () => apiClient.get(`${API_BASE}/dishes`).then(res => setDishes(res.data));
   useEffect(() => { fetchDishes(); }, []);
 
   const handleDishSelect = async (dish: DishSearch) => {
     setSelectedDish(dish); setSearchTerm('');
-    const res = await axios.get(`${API_BASE}/recipes/${dish.id}`);
+    const res = await apiClient.get(`${API_BASE}/recipes/${dish.id}`);
     setRecipes(Array.isArray(res.data) ? res.data : []);
   };
 
   const handleRecipeSelect = async (recipe: DishSearch) => {
     setSearchTerm('');
     try {
-      const res = await axios.get(`${API_BASE}/recipe/${selectedDish?.id}/${recipe.id}`);
+      const res = await apiClient.get(`${API_BASE}/recipe/${recipe.id}`);
       setSelectedRecipe(res.data);
     } catch (e) { console.error("Error fetching recipe:", e); }
   };
 
   const handleDeleteRecipe = async (recipeId: number) => {
     try {
-      await axios.delete(`${API_BASE}/recipe/${recipeId}`);
+      await apiClient.delete(`${API_BASE}/recipe/${recipeId}`);
       setRecipes(prev => prev.filter(r => r.id !== recipeId));
       setSelectedRecipe(null);
     } catch (e) {
@@ -65,11 +65,11 @@ const RecipeManager: React.FC<{ isActive: boolean, onSearchTrigger: () => void }
     try {
       let res;
       if (type === 'url') {
-        res = await axios.get(`${API_BASE}/recipe_url/${selectedDish.id}`, { params: { url: payload } });
+        res = await apiClient.get(`${API_BASE}/recipe_url/${selectedDish.id}`, { params: { url: payload } });
       } else {
         const formData = new FormData();
         formData.append('file', payload);
-        res = await axios.post(`${API_BASE}/recipe_image/${selectedDish.id}`, formData);
+        res = await apiClient.post(`${API_BASE}/recipe_image/${selectedDish.id}`, formData);
       }
       handleDishSelect(selectedDish);
       setIsCreatingRecipe(false);
@@ -94,9 +94,9 @@ const RecipeManager: React.FC<{ isActive: boolean, onSearchTrigger: () => void }
       }}
       onSubmit={async () => {
         if (formRecipe.id && formRecipe.id !== 0) {
-          await axios.put(`${API_BASE}/recipe_edit/${formRecipe.id}`, formRecipe);
+          await apiClient.put(`${API_BASE}/recipe_edit/${formRecipe.id}`, formRecipe);
         } else {
-          await axios.post(`${API_BASE}/recipe/${selectedDish!.id}`, formRecipe);
+          await apiClient.post(`${API_BASE}/recipe/${selectedDish!.id}`, formRecipe);
         }
         setIsCreatingRecipe(false);
         if (selectedDish) handleDishSelect(selectedDish);
@@ -123,12 +123,12 @@ const RecipeManager: React.FC<{ isActive: boolean, onSearchTrigger: () => void }
             </span>
           </div>
           <div className="flex gap-2">
-            {!selectedDish && !selectedRecipe && (
+            {!selectedDish && !selectedRecipe && isAdmin && (
               <button onClick={() => setIsCreatingDish(!isCreatingDish)} className="border border-[#5E7161] text-[#5E7161] px-2 py-0.5 font-bold uppercase text-[9px]">
                 {isCreatingDish ? 'Cancel' : '+ New Dish'}
               </button>
             )}
-            {selectedDish && !selectedRecipe && (
+            {selectedDish && !selectedRecipe && isAdmin && (
               <button onClick={() => {
                 setFormRecipe(emptyRecipe(selectedDish.id));
                 setIsCreatingRecipe(true);
@@ -138,11 +138,11 @@ const RecipeManager: React.FC<{ isActive: boolean, onSearchTrigger: () => void }
           </div>
         </div>
 
-        {isCreatingDish ? (
+        {isCreatingDish && isAdmin ? (
           <div className="p-4 flex gap-2">
             <input autoFocus className="flex-1 bg-[#4A594D] p-3 outline-none text-sm border-b border-[#FFA500]" placeholder="New dish name..." value={newDishName} onChange={e => setNewDishName(e.target.value)} />
             <button onClick={async () => {
-              const res = await axios.post(`${API_BASE}/dish`, { name: newDishName });
+              const res = await apiClient.post(`${API_BASE}/dish`, { name: newDishName });
               await fetchDishes();
               handleDishSelect({ id: res.data.id, name: res.data.name });
               setNewDishName(''); setIsCreatingDish(false);
@@ -165,6 +165,7 @@ const RecipeManager: React.FC<{ isActive: boolean, onSearchTrigger: () => void }
         <RecipeViewer
           recipe={selectedRecipe}
           dishName={selectedDish?.name}
+          isAdmin={isAdmin}
           onBack={() => setSelectedRecipe(null)}
           onDelete={handleDeleteRecipe}
           onEdit={(recipe) => {

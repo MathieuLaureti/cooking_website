@@ -1,32 +1,62 @@
 # API
 
-No authentication. JSON unless noted.
+JWT Bearer authentication on all routes except `/health`, `POST /auth/login`, and `POST /auth/register`.
 
-Browser origin hits nginx `/api/`, which proxies to FastAPI with `/api` stripped.
+Send `Authorization: Bearer <token>` on every authenticated request. Token payload includes `sub` (user id), `username`, `role`, `exp`. Protected routes decode the JWT only — no per-request database lookup.
 
-Example: UI `/api/match_checker/ingredients` → server `/match_checker/ingredients`.
-
-Pydantic shapes: `server/app/pydantic_models/match_checker.py`, `server/app/pydantic_models/recipes.py`.
+Pydantic shapes: `server/app/pydantic_models/auth.py`, `server/app/pydantic_models/match_checker.py`, `server/app/pydantic_models/recipes.py`.
 
 ## Health
 
 ### `GET /api/health`
 
 - Purpose: liveness (prod compose healthcheck hits `http://127.0.0.1:6666/health` inside the server container).
-- Request: none
+- Auth: none
 - Response: `"Hello World"` (JSON string)
 - Code: `server/app/main.py`
 
+## Auth
+
+Code: `server/app/router/auth.py`. Prefix `/auth`.
+
+### `POST /api/auth/login`
+
+- Purpose: authenticate and receive a JWT.
+- Auth: none
+- Request body: `{ "username": string, "password": string }`
+- Response: `{ "access_token": string, "token_type": "bearer", "username": string, "role": "admin" | "user" }`
+- Errors: `401` `"Invalid username or password"`
+
+### `POST /api/auth/register`
+
+- Purpose: create a read-only `user` account with a valid registration code.
+- Auth: none
+- Request body: `{ "username": string, "password": string (min 6), "code": string (7 digits) }`
+- Response `201`: `{ "username": string, "role": "user" }`
+- Errors: `400` invalid/expired code; `400` username already taken
+
+### `GET /api/auth/me`
+
+- Purpose: return current user from JWT (no DB).
+- Auth: Bearer
+- Response: `{ "username": string, "role": "admin" | "user" }`
+- Errors: `401` missing or invalid token
+
+### `GET /api/auth/registration-code`
+
+- Purpose: current 7-digit registration code for inviting new users.
+- Auth: Bearer, admin only
+- Response: `{ "code": string, "expires_in_seconds": int }`
+- Errors: `401`, `403` `"Admin access required"`
+
 ## Match checker
 
-Code: `server/app/router/match_checker.py`. Prefix `/match_checker`.
+Code: `server/app/router/match_checker.py`. Prefix `/match_checker`. **Auth: Bearer (any role).**
 
 ### `GET /api/match_checker/ingredients`
 
 - Purpose: list all pairing entries for the search dropdown.
-- Request: none
 - Response: `[{ "id": int, "title": string }, ...]`
-- Errors: none beyond 5xx
 
 ### `GET /api/match_checker/ingredient/{id}`
 
@@ -52,34 +82,30 @@ Code: `server/app/router/recipes.py`. Prefix `/recipes`.
 
 ### `GET /api/recipes/dishes`
 
+- Auth: Bearer (any role)
 - Purpose: list dishes.
-- Request: none
 - Response: `[{ "id": int, "name": string }, ...]`
-- Cache: Redis key `dishes:all`, TTL 3600s. Not invalidated on create/edit/delete dish.
-- Errors: none beyond 5xx
+- Cache: Redis key `dishes:all`, TTL 3600s.
 
 ### `POST /api/recipes/dish`
 
+- Auth: **admin**
 - Purpose: create a dish.
 - Request body: `{ "name": string }`
 - Response: `{ "id": int, "name": string }`
-- Errors: `400` if that name already exists
+- Errors: `400` duplicate name; `401`/`403`
 
 ### `PUT /api/recipes/dish_edit/{dish_id}`
 
+- Auth: **admin**
 - Purpose: rename a dish.
-- Request: path `dish_id`; body `{ "name": string }`
-- Response: `{ "id": int, "name": string }`
-- Errors: `404` `"Dish not found"`
-- Notes: console does not call this.
+- Errors: `404` `"Dish not found"`; `401`/`403`
 
 ### `DELETE /api/recipes/dish/{dish_id}`
 
+- Auth: **admin**
 - Purpose: delete a dish with no recipes.
-- Request: path `dish_id`
-- Response: `{ "detail": "Dish deleted successfully" }`
-- Errors: `404` `"Dish not found"`; `400` if any recipe still references the dish
-- Notes: console does not call this.
+- Errors: `404`, `400` if recipes exist; `401`/`403`
 
 ## Recipes — recipes
 
@@ -100,53 +126,40 @@ Full recipe object (`RecipeFull`):
 }
 ```
 
-Create body (`RecipeCreate`) is the same without `id` (still includes `dish_id` and `name`).
-
 ### `GET /api/recipes/recipes/{dish_id}`
 
-- Purpose: list recipes for one dish.
-- Request: path `dish_id`
-- Response: `[{ "id": int, "name": string }, ...]` (empty list if the dish has none; no 404)
-- Cache: `dish_recipes:{dish_id}`, TTL 3600s. Invalidated on manual/URL create only.
+- Auth: Bearer (any role)
+- Response: `[{ "id": int, "name": string }, ...]`
+- Cache: `dish_recipes:{dish_id}`, TTL 3600s.
 
 ### `GET /api/recipes/recipe/{recipe_id}`
 
-- Purpose: full recipe tree.
-- Request: path `recipe_id`
+- Auth: Bearer (any role)
 - Response: `RecipeFull`
-- Cache: `full_recipe:{recipe_id}`, TTL 3600s. Not invalidated on edit/delete.
+- Cache: `full_recipe:{recipe_id}`, TTL 3600s.
 - Errors: `404` `"Recipe not found"`
-- Notes: console currently requests `/api/recipes/recipe/{dish_id}/{recipe_id}`, which does not match this route.
 
 ### `POST /api/recipes/recipe/{dish_id}`
 
-- Purpose: create a recipe under a dish (manual form).
-- Request: path `dish_id`; body `RecipeCreate`
-- Response: `RecipeFull`
-- Errors: `404` if dish missing; `400` if a recipe with the same name already exists on that dish
-- Side effects: invalidates `dish_recipes:{dish_id}`
+- Auth: **admin**
+- Purpose: manual create.
+- Errors: `404`, `400` duplicate name; `401`/`403`
 
 ### `PUT /api/recipes/recipe_edit/{recipe_id}`
 
-- Purpose: replace name and rebuild all components (clears existing components, then inserts the payload’s).
-- Request: path `recipe_id`; body `RecipeFull`
-- Response: `RecipeFull`
-- Errors: `404` `"Recipe not found"`
+- Auth: **admin**
+- Purpose: replace name and rebuild all components.
+- Errors: `404`; `401`/`403`
 
 ### `DELETE /api/recipes/recipe/{recipe_id}`
 
-- Purpose: delete a recipe (ORM cascade removes components, ingredients, instructions).
-- Request: path `recipe_id`
-- Response: `{ "detail": "Recipe deleted successfully" }`
-- Errors: `404` `"Recipe not found"`
+- Auth: **admin**
+- Errors: `404`; `401`/`403`
 
 ### `GET /api/recipes/recipe_url/{dish_id}?url=`
 
-- Purpose: scrape a web page, ask Ollama for `RecipeCreate` JSON, then persist like manual create.
-- Request: path `dish_id`; query `url` (required)
-- Response: `RecipeFull`
-- Errors: `404`/`400` from create; `500` with `detail` string on scrape/LLM failure
-- Timeouts: Playwright page load 60s; Ollama HTTP 120s; nginx proxy read 300s
-- Notes: extractor is constructed with hardcoded model `qwen2.5:7b`, not `MODEL_NAME`.
+- Auth: **admin**
+- Purpose: scrape URL via Playwright + Ollama, then persist.
+- Errors: `500` on scrape/LLM failure; `401`/`403`
 
-There is **no** `POST /api/recipes/recipe_image/{dish_id}` on the server. `ImageRecipeExtractor` exists in `server/app/scripts/APRIR.py` and the console posts to that path; the router never registers it.
+There is **no** `POST /api/recipes/recipe_image/{dish_id}` on the server yet.
