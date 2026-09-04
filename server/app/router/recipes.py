@@ -18,6 +18,7 @@ from ..scripts.APRWS import WebRecipeExtractor
 from ..scripts.APRIR import ImageRecipeExtractor
 from ..cache import cache
 import json
+import os
 
 router = APIRouter(prefix="/recipes", tags=[""])
 
@@ -215,9 +216,11 @@ async def get_recipe_by_id(recipe_id: int, db: AsyncSession = Depends(get_db)):
     return await fetch_with_cache(f"full_recipe:{recipe_id}", 3600, fetch_data)
 
 
-OLLAMA_BASE = "http://192.168.2.99:11434/api/generate"
-web_tool = WebRecipeExtractor(OLLAMA_BASE, "qwen2.5:7b")
-img_tool = ImageRecipeExtractor(OLLAMA_BASE, "llama3.2-vision:11b")
+OLLAMA_URL = os.getenv("OLLAMA_URL", None)
+MODEL_NAME = os.getenv("MODEL_NAME", None)
+IMAGE_MODEL_NAME = os.getenv("IMAGE_MODEL_NAME", None)
+web_tool = WebRecipeExtractor(OLLAMA_URL, "qwen2.5:7b")
+img_tool = ImageRecipeExtractor(OLLAMA_URL, "llama3.2-vision:11b")
 
 
 @router.get("/recipe_url/{dish_id}", response_model=models.RecipeFull)

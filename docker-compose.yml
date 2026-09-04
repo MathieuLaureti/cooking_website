@@ -1,118 +1,67 @@
+name: cooking_dev
+
 services:
+  nginx:
+    container_name: cw_nginx_dev
+    image: nginx:1.29.3-alpine
+    restart: unless-stopped
+    ports:
+      - "81:80"
+    volumes:
+      - ./nginx/default.dev.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - cw_dev_network
+    depends_on:
+      - console
+      - server
+
   console:
-    container_name: cw_console
-    image: cw_console_container
+    container_name: cw_console_dev
+    image: cw_console_dev
     restart: unless-stopped
     build:
       context: ./console
       dockerfile: Dockerfile
     env_file: .env
-    ports:
-      - 6665:6665
     volumes:
       - ./console:/app
+      - console_node_modules:/app/node_modules
     networks:
-      - cw_network
+      - cw_dev_network
+    depends_on:
+      - server
 
   server:
-    container_name: cw_server
-    image: cw_server_container
+    container_name: cw_server_dev
+    image: cw_server_dev
     restart: unless-stopped
     build:
       context: ./server
       dockerfile: Dockerfile
+      target: dev
     env_file: .env
-    ports:
-      - 6666:6666
+    environment:
+      DB_HOST: "192.168.2.99"
+      DB_PORT: "5432"
+      DB_NAME: cooking_dev
     volumes:
       - ./server:/code
     networks:
-      - cw_network
-
-  public_server:
-    container_name: cw_rust_api
-    build:
-      context: ./public_server
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@timescale:6667/${DB_NAME}
-    ports:
-      - 6668:6668
+      - cw_dev_network
     depends_on:
-      timescale:
-        condition: service_healthy
-    networks:
-      - cw_network
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -f http://127.0.0.1:6668/ | grep -q 'Hello, World!' || exit 1",
-        ]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 15s
-
-  timescale:
-    container_name: cw_db
-    image: timescale/timescaledb:2.23.1-pg17
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-      TS_TUNE_MEMORY: "2GB"
-      TS_TUNE_NUM_CPUS: "2"
-      PGPORT: 6667
-    ports:
-      - 6667:6667
-    env_file: .env
-    volumes:
-      - cw_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -p 6667 -d ${DB_NAME}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - cw_network
-
-  nginx:
-    container_name: cw_nginx
-    image: cw_nginx_container
-    restart: unless-stopped
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    env_file: .env
-    ports:
-      - 80:80
-      - 443:443
-    networks:
-      - cw_network
-    depends_on:
-      public_server:
-        condition: service_healthy
+      - cache
 
   cache:
     image: redis:7.4-alpine
-    container_name: cw_redis
-    ports:
-      - "6379:6379"
-    command: >
-      sh -c "redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru --save '' --appendonly no & 
-             sleep 2; 
-             redis-cli flushall; 
-             wait"
+    container_name: cw_redis_dev
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --save "" --appendonly no
     networks:
-      - cw_network
+      - cw_dev_network
 
 networks:
-  cw_network:
+  cw_dev_network:
     driver: bridge
 
 volumes:
-  cw_data:
+  console_node_modules:

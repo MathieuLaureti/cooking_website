@@ -23,9 +23,3 @@ yarn-error.log*
 .DS_Store
 .vscode/
 .idea/
-
-public_server/target/
-
-public_server/Cargo.lock
-
-**/*.rs.bk

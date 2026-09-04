@@ -3,8 +3,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool
 import asyncio
 from alembic import context
-import os
-from app.database import Base
+from app.database import Base, db_url
 import app.db_models.models
 
 # this is the Alembic Config object, which provides
@@ -30,9 +29,8 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url,
+        url=db_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -51,11 +49,7 @@ def do_run_migrations(connection):
 
 async def run_async_migrations() -> None:
     configuration = config.get_section(config.config_ini_section, {})
-
-    # Priority: Environment variable > alembic.ini
-    db_url = os.getenv("DATABASE_URL")
-    if db_url:
-        configuration["sqlalchemy.url"] = db_url
+    configuration["sqlalchemy.url"] = db_url
 
     connectable = async_engine_from_config(
         configuration,

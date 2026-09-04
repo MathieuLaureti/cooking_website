@@ -1,7 +1,7 @@
 import React, { useState, useEffect, type ChangeEvent } from 'react';
 import axios from 'axios';
 
-const API_BASE = 'http://192.168.2.106/api/match_checker';
+const API_BASE = '/api/match_checker';
 
 interface MatchCheckerShort { id: number; title: string; }
 interface MatchCheckerFull extends MatchCheckerShort { 

@@ -1,0 +1,29 @@
+---
+description: Keep docs/ in sync with every code change this agent makes
+alwaysApply: true
+---
+
+# Keep docs in sync
+
+A code change is not finished until `docs/` matches the code. Follow `.cursor/skills/plan-docs/SKILL.md`.
+
+In the same turn as the code (not a follow-up), patch the files that apply:
+
+| If you change | Also update |
+|---------------|-------------|
+| `server/app/router/**`, pydantic models | `docs/api.md` and the matching `docs/features/*.md` |
+| `server/app/db_models/**`, `server/alembic/**` | `docs/data-model.md` |
+| `docker-compose*.yml`, `nginx/**`, `Dockerfile*`, `.env.example`, `wait-for-db.sh` | `docs/architecture.md`, `docs/operations.md` |
+| `console/src/**` | the matching `docs/features/*.md` |
+
+Add, rename, or delete `docs/features/<name>.md` when a user-facing capability is added or removed. Keep `docs/README.md` links in sync.
+
+```
+# ❌ BAD — ship the route only
+@router.get("/foo")
+
+# ✅ GOOD — same turn
+@router.get("/foo")  +  document GET /api/.../foo in docs/api.md
+```
+
+Skip only a pure refactor with no behavior, API, schema, UI, or ops change. Say so explicitly.

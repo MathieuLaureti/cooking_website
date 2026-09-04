@@ -1,0 +1,59 @@
+name: cooking_prod
+
+services:
+  nginx:
+    container_name: cw_nginx_prod
+    image: cw_nginx_prod
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    ports:
+      - "80:80"
+    networks:
+      - cw_prod_network
+    depends_on:
+      server:
+        condition: service_healthy
+
+  server:
+    container_name: cw_server_prod
+    image: cw_server_prod
+    restart: unless-stopped
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: prod
+    env_file: .env
+    environment:
+      DB_HOST: "192.168.2.99"
+      DB_PORT: "5432"
+      DB_NAME: cooking_main
+    networks:
+      - cw_prod_network
+    depends_on:
+      - cache
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:6666/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  cache:
+    image: redis:7.4-alpine
+    container_name: cw_redis_prod
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --save "" --appendonly no
+    networks:
+      - cw_prod_network
+
+networks:
+  cw_prod_network:
+    driver: bridge

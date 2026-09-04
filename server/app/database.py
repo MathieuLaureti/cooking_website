@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import (
     AsyncSession,
 )
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.engine import URL
 
 raw_url = os.getenv("DATABASE_URL")
 
@@ -18,12 +17,11 @@ if raw_url:
     else:
         db_url = raw_url
 else:
-    # Fallback construction
     user = os.getenv("DB_USER")
     pw = os.getenv("DB_PASSWORD")
-    host = os.getenv("DB_HOST", "timescale")
-    port = os.getenv("DB_PORT", "6667")
-    name = os.getenv("DB_NAME", "db")
+    host = os.getenv("DB_HOST", "192.168.2.99")
+    port = os.getenv("DB_PORT", "5432")
+    name = os.getenv("DB_NAME", "cooking_dev")
     db_url = f"postgresql+asyncpg://{user}:{pw}@{host}:{port}/{name}"
 
 engine = create_async_engine(
@@ -53,5 +51,4 @@ async def get_db():
         try:
             yield db
         finally:
-            # Context manager handles close() automatically
             pass

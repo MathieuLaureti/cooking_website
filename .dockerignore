@@ -1,0 +1,8 @@
+.git
+.gitignore
+.env
+.env.example
+LICENSE
+server
+console/node_modules
+console/dist
