@@ -6,15 +6,19 @@
     body { font-family: sans-serif; background: #4A594D; color: #f4f1ea; margin: 0; width: 16rem; }
     main { padding: 0.75rem; }
     button { width: 100%; padding: 0.6rem; background: #FFA500; border: 0; border-radius: 0.25rem; font-weight: 700; }
-    p { font-size: 0.8rem; min-height: 1.2rem; }
+    p { font-size: 0.8rem; min-height: 1.2rem; margin: 0.35rem 0 0; }
+    #queue-hint { font-size: 0.7rem; color: #b8c4ba; min-height: 0; }
+    #status.busy { color: #FFA500; }
     a { color: #FFA500; }
   </style>
 </head>
 <body>
   <main>
     <button id="add" type="button">Add this page</button>
-    <p id="status"></p>
+    <p id="queue-hint" aria-live="polite"></p>
+    <p id="status" aria-live="polite"></p>
   </main>
+  <script src="import-status.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

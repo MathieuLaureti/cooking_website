@@ -1,14 +1,17 @@
 {
   "manifest_version": 3,
   "name": "Cooking recipe import",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Send the current page to the cooking site for recipe extraction.",
   "action": {
     "default_popup": "popup.html",
     "default_title": "Add this recipe"
   },
+  "background": {
+    "service_worker": "background.js"
+  },
   "options_page": "options.html",
-  "permissions": ["activeTab", "storage"],
+  "permissions": ["activeTab", "storage", "alarms"],
   "host_permissions": [
     "https://homelabdu204.ca/*",
     "https://www.homelabdu204.ca/*",

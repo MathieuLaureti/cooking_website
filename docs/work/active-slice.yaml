@@ -1,7 +1,15 @@
-# No active agent-managed slice — last merged: #19 (archive/reader-fallback-retries-2026-09-26.yaml)
+# Active agent-managed slice — feature #21
 version: 1
 repo: MathieuLaureti/cooking_website
-issues: []
-phase: idle
-updated_at: "2026-09-26T23:40:00Z"
-updated_by: github-ship-sync
+input_doc: docs/input/2026-09-26-extension-import-progress.md
+delivery_mode: single
+issues:
+  - number: 21
+    url: https://github.com/MathieuLaureti/cooking_website/issues/21
+    role: primary
+branch: feature/21-extension-import-progress
+labels:
+  managed: agent-managed
+phase: pr_open
+updated_at: "2026-09-27T00:50:00Z"
+updated_by: documenter
