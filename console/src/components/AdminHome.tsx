@@ -69,6 +69,12 @@ const UrlImportQueue: React.FC = () => {
       .catch(() => setError(action === 'keep' ? 'Could not keep that recipe' : 'Could not discard that import'));
   };
 
+  const retry = (id: number) => {
+    apiClient.post(`${API_PREFIX}/recipe_imports/${id}/retry`)
+      .then(() => load())
+      .catch(() => setError('Could not retry that import'));
+  };
+
   const extracting = rows.filter(row => row.status === 'queued' || row.status === 'running').length;
   const card = rows.find(row => row.status === 'ready') ?? rows.find(row => row.status === 'failed');
   const recipe = card?.extract;
@@ -118,6 +124,11 @@ const UrlImportQueue: React.FC = () => {
             {card.status === 'ready' && (
               <button type="button" onClick={() => act(card.id, 'keep')} className="px-3 py-2 rounded bg-[#FFA500] text-black text-xs font-bold uppercase tracking-widest">
                 Keep
+              </button>
+            )}
+            {card.status === 'failed' && !recipe && (
+              <button type="button" onClick={() => retry(card.id)} className="px-3 py-2 rounded bg-[#FFA500] text-black text-xs font-bold uppercase tracking-widest">
+                Retry
               </button>
             )}
             <button type="button" onClick={() => act(card.id, 'discard')} className="px-3 py-2 rounded bg-black/30 text-slate-300 text-xs font-bold uppercase tracking-widest">
