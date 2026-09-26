@@ -125,3 +125,28 @@ async def discard(
     await db.commit()
     await db.refresh(row)
     return _item(row)
+
+
+@router.post("/{import_id}/retry", response_model=RecipeImportItem)
+async def retry(
+    import_id: int,
+    db: AsyncSession = Depends(get_db),
+    _admin: TokenUser = Depends(require_admin),
+):
+    row = await db.get(RecipeUrlImport, import_id)
+    if row is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Import not found")
+    if row.status != "failed":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Import is not failed")
+    existing = await _active(db, row.normalized_url)
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Another import for this URL is already queued or ready",
+        )
+    row.status = "queued"
+    row.error = None
+    row.extract = None
+    await db.commit()
+    await db.refresh(row)
+    return _item(row)

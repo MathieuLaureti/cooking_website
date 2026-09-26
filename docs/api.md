@@ -264,6 +264,12 @@ Code: `server/app/router/recipe_import.py`. Prefix `/recipe_imports`. **Auth: ad
 - Response: the import item.
 - Errors: `404` missing row; `400` when the row is still `queued` or `running`; `403` for a non-admin
 
+### `POST /api/recipe_imports/{import_id}/retry`
+
+- Purpose: re-queue a `failed` row (`status` → `queued`, clears `error` and `extract`) so the background worker runs extraction again.
+- Response: the import item.
+- Errors: `404` missing row; `400` when the row is not `failed`, or when another row for the same normalized URL is already `queued`, `running`, or `ready`; `403` for a non-admin
+
 ### `POST /api/recipes/recipe_image?dish_id=`
 
 - Auth: **admin**
