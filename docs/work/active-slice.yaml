@@ -32,12 +32,12 @@ issues:
   - number: 10
     url: https://github.com/MathieuLaureti/cooking_website/issues/10
     role: optional
-branch: ""
+branch: feature/1-pytest-harness
 pr:
   number: null
   url: ""
-delivery_report: ""
+delivery_report: docs/delivery/1-pytest-harness.md
 labels:
   managed: agent-managed
-updated_at: "2026-09-26T20:15:00Z"
-updated_by: github-project
+updated_at: "2026-09-26T20:20:00Z"
+updated_by: coder
