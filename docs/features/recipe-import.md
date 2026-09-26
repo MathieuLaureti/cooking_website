@@ -34,7 +34,7 @@ flowchart TD
 
 - `POST /api/recipe_imports`, `GET /api/recipe_imports`, `POST /api/recipe_imports/{id}/keep`, `POST /api/recipe_imports/{id}/discard` in `server/app/router/recipe_import.py` (`require_admin`)
 - `server/app/recipe_import_worker.py` — started from the FastAPI lifespan in `server/app/main.py`. Startup sets leftover `running` rows back to `queued`.
-- `RecipeExtractor.from_url` in `server/app/scripts/extract.py` holds one asyncio lock for the scrape and the model call
+- `RecipeExtractor.from_url` in `server/app/scripts/extract.py` holds one asyncio lock for the scrape and the model call. Playwright loads the page first; if the body text is too short or looks like a bot wall (for example Cloudflare), the server retries through the Jina reader proxy (`r.jina.ai`) before calling Gemini.
 - Table `recipe_url_import` in [data model](../data-model.md)
 
 ## Edge cases
