@@ -1,0 +1,17 @@
+# Copy to active-slice.yaml when a new agent-managed slice starts.
+version: 1
+repo: MathieuLaureti/cooking_website
+input_doc: docs/input/YYYY-MM-DD-slug.md
+issues:
+  - number: 0
+    url: https://github.com/MathieuLaureti/cooking_website/issues/0
+    role: primary
+branch: ""
+pr:
+  number: null
+  url: ""
+delivery_report: ""
+labels:
+  managed: agent-managed
+updated_at: ""
+updated_by: github-project
