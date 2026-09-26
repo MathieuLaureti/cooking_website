@@ -14,7 +14,8 @@ def oauth_issuer() -> str:
 
 
 def mcp_resource_url() -> str:
-    return f"{public_base_url()}/mcp/"
+    # OAuth protected-resource identifier (RFC 9728); must match client URL exactly (no trailing slash).
+    return f"{public_base_url()}/mcp"
 
 
 def oauth_protected_resource_metadata_url() -> str:

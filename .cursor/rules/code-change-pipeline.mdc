@@ -1,0 +1,34 @@
+---
+description: Issue + PR before app edits or prod deploy; no hotfix bypass
+alwaysApply: true
+---
+
+# Code change pipeline (cooking_website)
+
+Read `~/.cursor/skills/code-change-pipeline/SKILL.md` and `docs/work/active-slice.yaml` **before** any product change.
+
+## Before editing application code
+
+Stop unless **one** of these is true:
+
+1. The change is enrolled in `docs/work/active-slice.yaml` with label **`agent-managed`**, or
+2. The user passed **`/automatic`** combined gate for **exactly one** issue in this slice.
+
+Application paths include: `server/`, `console/`, `nginx/`, `docker-compose*.yml`, `scripts/deploy-prod.sh`, and shipping docs (`docs/api.md`, `docs/features/`, `docs/operations.md`, `docs/architecture.md`).
+
+**Order:** GitHub issue → feature/fix branch → implement → test → **open PR** → user ship/merge → then prod deploy.
+
+User urgency (“deploy so I can retry”, “fix now”) does **not** skip issue or PR. Offer **`/automatic`** to combine gates, not to skip artifacts.
+
+## Prod deploy on this host
+
+Prod is **`docker-compose.prod.yml`** on the homelab Pi. **Do not** run `docker compose -f docker-compose.prod.yml build|up|restart` unless:
+
+- The user wrote **`emergency deploy override`**, or
+- **`scripts/deploy-prod.sh`** / GitHub **Deploy prod** workflow runs **after** the fix is on `origin/master` (normal CD).
+
+Manual prod rebuilds from a dirty or unmerged working tree cause drift from git and bypass review.
+
+## Off-pipeline recovery
+
+If prod or the working tree was changed without a PR: create the issue, put the live diff on a branch, open the PR, note “already deployed at …” in the delivery report, then merge and let CD reconcile.

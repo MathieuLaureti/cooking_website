@@ -38,7 +38,7 @@ Transport: **Streamable HTTP** (FastMCP). Nginx proxies `/mcp` to the FastAPI mo
 | Prod (homelab) | `https://www.homelabdu204.ca/recipes/mcp/` |
 | Server direct (debug) | `http://server:6666/mcp/` |
 
-Use a **trailing slash** on the MCP URL. Homelab strips `/recipes/` before the cooking nginx; OAuth metadata URLs use the same **`PUBLIC_BASE_URL`** prefix (see [operations.md](../operations.md)).
+Streamable HTTP works at **`/mcp`** or **`/mcp/`** (cooking nginx proxies both). OAuth protected-resource metadata uses **`…/mcp`** with **no** trailing slash so it matches strict connectors (Grok Bot cloud). Homelab strips `/recipes/` before the cooking nginx; OAuth metadata URLs use the same **`PUBLIC_BASE_URL`** prefix (see [operations.md](../operations.md)).
 
 ## Authentication
 
@@ -46,7 +46,7 @@ Use a **trailing slash** on the MCP URL. Homelab strips `/recipes/` before the c
 
 [Grok Bot](https://docs.x.ai/grok-bot) runs in Cursor’s cloud. Connectors are account-wide plugins (not per-Bot). The cooking MCP URL must be on the **public internet** — use prod, not `localhost`.
 
-**MCP server URL:** `https://www.homelabdu204.ca/recipes/mcp/` (trailing slash).
+**MCP server URL:** `https://www.homelabdu204.ca/recipes/mcp` (no trailing slash for Grok Bot; `/recipes/mcp/` also works for transport).
 
 #### OAuth (preferred)
 

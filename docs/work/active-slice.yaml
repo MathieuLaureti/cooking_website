@@ -1,15 +1,18 @@
-# No active agent-managed slice. Copy active-slice.template.yaml when gate 2 starts.
+# Active agent-managed slice — fix #15
 version: 1
 repo: MathieuLaureti/cooking_website
-input_doc: ""
-issues: []
-branch: ""
+input_doc: docs/input/2026-09-26-bug-mcp-oauth-resource-no-trailing-slash.md
+issues:
+  - number: 15
+    url: https://github.com/MathieuLaureti/cooking_website/issues/15
+    role: primary
+branch: fix/15-mcp-oauth-resource-no-trailing-slash
 pr:
   number: null
   url: ""
 delivery_report: ""
 labels:
   managed: agent-managed
-phase: idle
-updated_at: "2026-09-26T21:59:00Z"
-updated_by: documenter
+phase: implement
+updated_at: "2026-09-26T22:30:00Z"
+updated_by: orchestrator
