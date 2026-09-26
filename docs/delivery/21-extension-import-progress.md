@@ -7,7 +7,7 @@ pr-open
 - Issue(s): [#21](https://github.com/MathieuLaureti/cooking_website/issues/21)
 - Input doc: `docs/input/2026-09-26-extension-import-progress.md`
 - Branch: `feature/21-extension-import-progress`
-- PR: **pending**
+- PR: https://github.com/MathieuLaureti/cooking_website/pull/22
 
 ## Summary
 

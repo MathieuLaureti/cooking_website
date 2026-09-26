@@ -8,6 +8,11 @@ issues:
     url: https://github.com/MathieuLaureti/cooking_website/issues/21
     role: primary
 branch: feature/21-extension-import-progress
+pr:
+  number: 22
+  url: https://github.com/MathieuLaureti/cooking_website/pull/22
+  state: open
+delivery_report: docs/delivery/21-extension-import-progress.md
 labels:
   managed: agent-managed
 phase: pr_open
