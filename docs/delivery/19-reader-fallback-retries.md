@@ -1,7 +1,7 @@
 # Delivery: Jina reader fallback retries for URL import
 
 ## Status
-pr-open
+merged
 
 ## Links
 - Issue(s): [#19](https://github.com/MathieuLaureti/cooking_website/issues/19)
