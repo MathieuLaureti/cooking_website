@@ -8,11 +8,11 @@ issues:
     role: primary
 branch: fix/15-mcp-oauth-resource-no-trailing-slash
 pr:
-  number: null
-  url: ""
-delivery_report: ""
+  number: 16
+  url: https://github.com/MathieuLaureti/cooking_website/pull/16
+delivery_report: docs/delivery/15-mcp-oauth-resource-no-trailing-slash.md
 labels:
   managed: agent-managed
-phase: implement
-updated_at: "2026-09-26T22:30:00Z"
+phase: review
+updated_at: "2026-09-26T22:32:00Z"
 updated_by: orchestrator
