@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import (
     AsyncSession,
 )
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 
 raw_url = os.getenv("DATABASE_URL")
 
@@ -24,14 +25,17 @@ else:
     name = os.getenv("DB_NAME", "cooking_dev")
     db_url = f"postgresql+asyncpg://{user}:{pw}@{host}:{port}/{name}"
 
-engine = create_async_engine(
-    db_url,
-    pool_size=20,
-    max_overflow=5,
-    pool_recycle=1800,
-    pool_timeout=15,
-    future=True,
-)
+if os.getenv("SQLALCHEMY_POOL_NULL", "").lower() in ("1", "true", "yes"):
+    engine = create_async_engine(db_url, poolclass=NullPool, future=True)
+else:
+    engine = create_async_engine(
+        db_url,
+        pool_size=20,
+        max_overflow=5,
+        pool_recycle=1800,
+        pool_timeout=15,
+        future=True,
+    )
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,

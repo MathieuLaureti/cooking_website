@@ -6,6 +6,8 @@ Send `Authorization: Bearer <token>` on every authenticated request. Token paylo
 
 Pydantic shapes: `server/app/pydantic_models/auth.py`, `server/app/pydantic_models/match_checker.py`, `server/app/pydantic_models/nutrition.py`, `server/app/pydantic_models/alias_review.py`, `server/app/pydantic_models/recipe_import.py`, `server/app/pydantic_models/recipes.py`.
 
+Integration coverage for auth, alias review, nutrition, MCP API-key checks, and the recipe import worker lives in `server/tests/` (see [operations](operations.md#server-tests)).
+
 ## Health
 
 ### `GET /api/health`

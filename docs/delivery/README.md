@@ -6,6 +6,7 @@ Per-feature ship packets: changes, test evidence, PR title/body, ship checklist.
 
 | Report | Issue | Status |
 |--------|-------|--------|
-| [1-pytest-harness](1-pytest-harness.md) | #1 | pr-open |
+| [1-pytest-harness](1-pytest-harness.md) | #1 | merged |
+| [2-10-repo-quality](2-10-repo-quality.md) | #2–#10 | merged |
 
 Return to [documentation hub](../README.md).
