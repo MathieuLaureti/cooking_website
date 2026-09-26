@@ -34,8 +34,8 @@ issues:
     role: optional
 branch: feature/1-pytest-harness
 pr:
-  number: null
-  url: ""
+  number: 11
+  url: https://github.com/MathieuLaureti/cooking_website/pull/11
 delivery_report: docs/delivery/1-pytest-harness.md
 labels:
   managed: agent-managed

@@ -7,7 +7,7 @@ pr-open
 - Issue(s): [#1](https://github.com/MathieuLaureti/cooking_website/issues/1)
 - Input doc: `docs/input/2026-09-26-repo-quality-standards.md`
 - Branch: `feature/1-pytest-harness`
-- PR: **pending**
+- PR: https://github.com/MathieuLaureti/cooking_website/pull/11
 
 ## Summary
 
