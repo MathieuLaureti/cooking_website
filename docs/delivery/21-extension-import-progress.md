@@ -1,4 +1,4 @@
-# Delivery: Extension import in-progress UI
+# Delivery: Admin URL import in-progress UI
 
 ## Status
 pr-open
@@ -11,39 +11,38 @@ pr-open
 
 ## Summary
 
-The Chrome extension shows queue/extract state for the current tab in the popup and a toolbar badge with the number of active imports.
+Admin **URL imports** shows an in-progress section (extracting + queue) so you can see when the worker is busy while Gemini runs.
 
 ## Changes
 
 ### UI
-- `extension/` — `import-status.js`, `background.js`, popup polling, badge.
+- `console/src/components/AdminHome.tsx` — in-progress block, header **N in progress** / **idle**.
 
 ### API / backend
-- None (uses existing `GET /api/recipe_imports`).
+- None
 
 ### Evergreen docs
-- `docs/features/recipe-import.md`
+- `docs/features/admin.md`
 
 ## Testing
 
 ### Automated
-- **not run** (extension; manual only)
+- CI console build (on PR)
 
 ### Manual
-- Reload unpacked extension → queue a slow URL → popup shows **Extracting recipe…**; badge shows `1` → when ready, popup shows **Ready — review in admin**; badge clears.
+- Queue a URL from the extension → admin shows **Extracting recipe** with URL; when done, **Keep** card appears.
 
 ## GitHub — PR
 ### Title
-Extension: show URL import in progress (#21)
+Admin: show URL import in progress (#21)
 
 ### Body
 ```markdown
 ## Summary
-- Popup polls import queue and shows status for the current tab.
-- Toolbar badge shows count of queued/running imports.
+- Admin URL imports panel shows active extraction and queued URLs with a clear in-progress state.
 
 Closes #21
 
 ## Test plan
-- [ ] Reload extension in Chrome, queue a recipe URL, confirm popup + badge
+- [ ] Queue import → admin shows extracting block until ready
 ```

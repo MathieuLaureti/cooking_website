@@ -1,4 +1,4 @@
-# Chrome extension: import in-progress indication
+# Admin: URL import in-progress indication
 
 ## Status
 ready-for-github
@@ -7,12 +7,12 @@ ready-for-github
 feature
 
 ## Gates
-- Gate 1+2: client requested 2026-09-26 — “lets add a small ui indication”.
+- Gate 1+2: client requested 2026-09-26; clarified **admin app** (not Chrome extension).
 
 ## Summary
-While a URL is queued or extracting, show status in the extension popup (current tab) and a toolbar badge with the number of active imports.
+On the admin **URL imports** panel, show clearly when extraction is running or queued (URL + status), not only a count.
 
 ## Acceptance
-- Popup polls `GET /api/recipe_imports` (admin token) and shows state for the active tab URL.
-- Badge shows count of `queued` + `running` rows; clears when none.
-- Documented in `docs/features/recipe-import.md`.
+- In-progress block for `running` and `queued` rows with visible “extracting” state.
+- Empty state only when nothing is active and nothing to review.
+- `docs/features/admin.md` updated.

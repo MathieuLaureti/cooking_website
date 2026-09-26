@@ -75,7 +75,9 @@ const UrlImportQueue: React.FC = () => {
       .catch(() => setError('Could not retry that import'));
   };
 
-  const extracting = rows.filter(row => row.status === 'queued' || row.status === 'running').length;
+  const activeRows = rows.filter(row => row.status === 'queued' || row.status === 'running');
+  const running = activeRows.find(row => row.status === 'running');
+  const queuedRows = activeRows.filter(row => row.status === 'queued');
   const card = rows.find(row => row.status === 'ready') ?? rows.find(row => row.status === 'failed');
   const recipe = card?.extract;
 
@@ -83,12 +85,39 @@ const UrlImportQueue: React.FC = () => {
     <div className="bg-[#374239] rounded shadow-xl flex flex-col p-4">
       <div className="flex items-baseline justify-between gap-3 mb-3">
         <h2 className="text-[10px] uppercase tracking-[0.2em] text-[#FFA500] font-bold">URL imports</h2>
-        <span className="text-[10px] uppercase tracking-widest text-[#5E7161]">
-          {extracting} extracting
+        <span
+          className={`text-[10px] uppercase tracking-widest ${
+            activeRows.length > 0 ? 'text-[#FFA500] font-bold' : 'text-[#5E7161]'
+          }`}
+        >
+          {activeRows.length > 0 ? `${activeRows.length} in progress` : 'idle'}
         </span>
       </div>
       {error && <p className="text-sm text-red-300 mb-2">{error}</p>}
-      {!card && !error && (
+      {activeRows.length > 0 && (
+        <div className="mb-3 rounded bg-black/25 p-3 border border-[#FFA500]/25">
+          {running && (
+            <div className="mb-2">
+              <p className="text-[10px] uppercase tracking-widest text-[#FFA500] font-bold flex items-center gap-2 mb-1">
+                <span className="inline-block w-2 h-2 rounded-full bg-[#FFA500] animate-pulse shrink-0" aria-hidden />
+                Extracting recipe
+              </p>
+              <a href={running.url} className="text-xs text-slate-300 break-all" target="_blank" rel="noreferrer">
+                {running.url}
+              </a>
+            </div>
+          )}
+          {queuedRows.map(row => (
+            <div key={row.id} className={running ? 'mt-2 pt-2 border-t border-white/5' : ''}>
+              <p className="text-[10px] uppercase tracking-widest text-[#5E7161] mb-1">Waiting in queue</p>
+              <a href={row.url} className="text-xs text-slate-400 break-all" target="_blank" rel="noreferrer">
+                {row.url}
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
+      {!card && activeRows.length === 0 && !error && (
         <p className="text-sm text-slate-400">No recipes waiting. The browser button adds a URL.</p>
       )}
       {card && (

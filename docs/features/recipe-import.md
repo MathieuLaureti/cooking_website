@@ -21,13 +21,13 @@ flowchart TD
 ```
 
 1. Load `extension/` as an unpacked extension. The options page stores the site base (default `https://www.homelabdu204.ca/recipes`) and an admin JWT from `POST /api/auth/login`.
-2. On a recipe page, open the extension and press **Add this page**. The popup posts the tab URL, then polls the queue every few seconds while it is open. It shows **Waiting in queue…** or **Extracting recipe…** for this tab, **Ready — review in admin**, or a failure message. The toolbar badge shows how many imports are still `queued` or `running` (updated about every minute in the background, or immediately after you queue a page).
+2. On a recipe page, open the extension and press **Add this page**. The popup posts the tab URL and shows `Queued` or `Already queued|running|ready`. It does not wait for the scrape.
 3. The server worker claims the oldest `queued` row, sets `running`, and calls `RecipeExtractor.from_url`. Success stores the extract and sets `ready`. Failure stores the error and sets `failed`. The next row starts only after that finishes. `from_url` also refuses to run beside a draft-form URL import.
 4. On the admin screen, **URL imports** shows how many rows are still extracting and the oldest ready recipe. **Keep** writes it with the same dish match as URL import. **Discard** drops a ready or failed row. A failed row offers **Retry** (same queue row, extraction runs again) and **Discard**, not **Keep**.
 
 ## UI
 
-- `extension/manifest.json`, `extension/popup.html`, `extension/popup.js`, `extension/import-status.js`, `extension/background.js`, `extension/options.html`, `extension/options.js`
+- `extension/manifest.json`, `extension/popup.html`, `extension/popup.js`, `extension/options.html`, `extension/options.js`
 - `console/src/components/AdminHome.tsx` — polls `GET /api/recipe_imports` every few seconds
 
 ## Backend
