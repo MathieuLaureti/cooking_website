@@ -1,0 +1,43 @@
+version: 1
+repo: MathieuLaureti/cooking_website
+input_doc: docs/input/2026-09-26-repo-quality-standards.md
+issues:
+  - number: 1
+    url: https://github.com/MathieuLaureti/cooking_website/issues/1
+    role: primary
+  - number: 2
+    url: https://github.com/MathieuLaureti/cooking_website/issues/2
+    role: follow-up
+  - number: 3
+    url: https://github.com/MathieuLaureti/cooking_website/issues/3
+    role: follow-up
+  - number: 4
+    url: https://github.com/MathieuLaureti/cooking_website/issues/4
+    role: follow-up
+  - number: 5
+    url: https://github.com/MathieuLaureti/cooking_website/issues/5
+    role: follow-up
+  - number: 6
+    url: https://github.com/MathieuLaureti/cooking_website/issues/6
+    role: follow-up
+  - number: 7
+    url: https://github.com/MathieuLaureti/cooking_website/issues/7
+    role: follow-up
+  - number: 8
+    url: https://github.com/MathieuLaureti/cooking_website/issues/8
+    role: follow-up
+  - number: 9
+    url: https://github.com/MathieuLaureti/cooking_website/issues/9
+    role: follow-up
+  - number: 10
+    url: https://github.com/MathieuLaureti/cooking_website/issues/10
+    role: optional
+branch: ""
+pr:
+  number: null
+  url: ""
+delivery_report: ""
+labels:
+  managed: agent-managed
+updated_at: "2026-09-26T20:15:00Z"
+updated_by: github-project

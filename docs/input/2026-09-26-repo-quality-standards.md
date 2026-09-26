@@ -1,7 +1,7 @@
 # Repo quality standards (post-WIP landing)
 
 ## Status
-draft
+ready-for-github
 
 ## Summary
 
@@ -90,3 +90,4 @@ After landing the large feature batch on `master`, bring **cooking_website** to 
 
 - Baseline commits on `master`: `c71c528` (agent scaffold), `1dc4547` (feature landing).
 - GitHub label `agent-managed` already exists on `MathieuLaureti/cooking_website`.
+- **GitHub issues (gate 1, 2026-09-26):** #1–#10 — manifest `docs/work/active-slice.yaml` (primary **#1** pytest harness).
