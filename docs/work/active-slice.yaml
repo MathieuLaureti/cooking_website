@@ -1,18 +1,15 @@
+# No active agent-managed slice. Copy active-slice.template.yaml when gate 2 starts.
 version: 1
 repo: MathieuLaureti/cooking_website
-delivery_mode: batch
-input_doc: docs/input/2026-09-26-recipe-url-cloudflare-fallback.md
-issues:
-  - number: 13
-    url: https://github.com/MathieuLaureti/cooking_website/issues/13
-    role: primary
-branch: feature/13-recipe-url-cloudflare-fallback
+input_doc: ""
+issues: []
+branch: ""
 pr:
-  number: 14
-  url: https://github.com/MathieuLaureti/cooking_website/pull/14
-delivery_report: docs/delivery/13-recipe-url-cloudflare-fallback.md
+  number: null
+  url: ""
+delivery_report: ""
 labels:
   managed: agent-managed
-phase: pr_open
-updated_at: "2026-09-26T21:55:00Z"
+phase: idle
+updated_at: "2026-09-26T21:59:00Z"
 updated_by: documenter

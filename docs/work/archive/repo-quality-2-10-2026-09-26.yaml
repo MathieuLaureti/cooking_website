@@ -1,18 +1,44 @@
 version: 1
 repo: MathieuLaureti/cooking_website
-delivery_mode: batch
-input_doc: docs/input/2026-09-26-recipe-url-cloudflare-fallback.md
+input_doc: docs/input/2026-09-26-repo-quality-standards.md
 issues:
-  - number: 13
-    url: https://github.com/MathieuLaureti/cooking_website/issues/13
-    role: primary
-branch: feature/13-recipe-url-cloudflare-fallback
+  - number: 1
+    url: https://github.com/MathieuLaureti/cooking_website/issues/1
+    role: done
+  - number: 2
+    url: https://github.com/MathieuLaureti/cooking_website/issues/2
+    role: follow-up
+  - number: 3
+    url: https://github.com/MathieuLaureti/cooking_website/issues/3
+    role: follow-up
+  - number: 4
+    url: https://github.com/MathieuLaureti/cooking_website/issues/4
+    role: follow-up
+  - number: 5
+    url: https://github.com/MathieuLaureti/cooking_website/issues/5
+    role: follow-up
+  - number: 6
+    url: https://github.com/MathieuLaureti/cooking_website/issues/6
+    role: follow-up
+  - number: 7
+    url: https://github.com/MathieuLaureti/cooking_website/issues/7
+    role: follow-up
+  - number: 8
+    url: https://github.com/MathieuLaureti/cooking_website/issues/8
+    role: follow-up
+  - number: 9
+    url: https://github.com/MathieuLaureti/cooking_website/issues/9
+    role: follow-up
+  - number: 10
+    url: https://github.com/MathieuLaureti/cooking_website/issues/10
+    role: optional
+branch: feature/repo-quality-2-10
 pr:
-  number: null
-  url: ""
-delivery_report: docs/delivery/13-recipe-url-cloudflare-fallback.md
+  number: 12
+  url: https://github.com/MathieuLaureti/cooking_website/pull/12
+delivery_report: docs/delivery/2-10-repo-quality.md
 labels:
   managed: agent-managed
-phase: implementing
-updated_at: "2026-09-26T21:52:00Z"
+phase: merged
+updated_at: "2026-09-26T21:57:00Z"
 updated_by: documenter

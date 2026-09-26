@@ -1,7 +1,7 @@
 # Delivery: Recipe URL import Cloudflare reader fallback
 
 ## Status
-pr-open
+merged
 
 ## Links
 - Issue(s): [#13](https://github.com/MathieuLaureti/cooking_website/issues/13)
