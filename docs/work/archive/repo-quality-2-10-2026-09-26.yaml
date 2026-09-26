@@ -8,11 +8,11 @@ issues:
     role: primary
 branch: feature/13-recipe-url-cloudflare-fallback
 pr:
-  number: 14
-  url: https://github.com/MathieuLaureti/cooking_website/pull/14
+  number: null
+  url: ""
 delivery_report: docs/delivery/13-recipe-url-cloudflare-fallback.md
 labels:
   managed: agent-managed
-phase: pr_open
-updated_at: "2026-09-26T21:55:00Z"
+phase: implementing
+updated_at: "2026-09-26T21:52:00Z"
 updated_by: documenter

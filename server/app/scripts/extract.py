@@ -11,7 +11,46 @@ from app.pydantic_models.recipes import RecipeChatRequest, RecipeExtract
 
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 PAGE_CHAR_CAP = 40_000
+_MIN_PAGE_TEXT = 350
+_JINA_READER_PREFIX = "https://r.jina.ai/"
+_BOT_WALL_PHRASES = (
+    "performing security verification",
+    "checking your browser",
+    "just a moment",
+    "enable javascript and cookies",
+)
 _url_lock = asyncio.Lock()
+
+
+def _looks_like_bot_wall(text: str) -> bool:
+    lowered = text.lower()
+    return any(phrase in lowered for phrase in _BOT_WALL_PHRASES)
+
+
+def _page_text_usable(text: str) -> bool:
+    stripped = text.strip()
+    if len(stripped) < _MIN_PAGE_TEXT:
+        return False
+    return not _looks_like_bot_wall(stripped)
+
+
+async def _fetch_reader_fallback(url: str) -> str:
+    reader_url = f"{_JINA_READER_PREFIX}{url}"
+    async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
+        response = await client.get(
+            reader_url,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (compatible; CookingWebsiteRecipeImport/1.0)"
+                ),
+            },
+        )
+    if response.status_code >= 400:
+        raise ValueError(f"Reader fallback HTTP {response.status_code}")
+    text = response.text.strip()
+    if not _page_text_usable(text):
+        raise ValueError("Reader fallback text too short.")
+    return text
 
 _SYSTEM = (
     "Professional chef. Call emit_recipe once with the recipe from the source. "
@@ -296,6 +335,22 @@ class RecipeExtractor:
         return reply, validated
 
     async def _fetch_text(self, url: str) -> str:
+        playwright_error: str | None = None
+        try:
+            extracted_text = await self._fetch_text_playwright(url)
+            if _page_text_usable(extracted_text):
+                return extracted_text
+            playwright_error = "Extracted text too short."
+        except Exception as e:
+            playwright_error = str(e)
+
+        try:
+            return await _fetch_reader_fallback(url)
+        except Exception as reader_error:
+            detail = playwright_error or str(reader_error)
+            raise ValueError(f"Web extraction failed: {detail}") from reader_error
+
+    async def _fetch_text_playwright(self, url: str) -> str:
         async with async_playwright() as p:
             browser = await p.chromium.launch(
                 args=[
@@ -315,18 +370,29 @@ class RecipeExtractor:
             page = await context.new_page()
             try:
                 await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                try:
+                    await page.wait_for_function(
+                        """() => {
+                        const t = document.body?.innerText || '';
+                        if (t.length < 350) return false;
+                        const lower = t.toLowerCase();
+                        if (lower.includes('performing security verification')) return false;
+                        if (lower.includes('checking your browser') && t.length < 2500) {
+                            return false;
+                        }
+                        return true;
+                    }""",
+                        timeout=45000,
+                    )
+                except Exception:
+                    pass
                 await page.evaluate(
                     """() => {
                     const tags = ["script", "style", "header", "footer", "nav", "aside"];
                     tags.forEach(t => document.querySelectorAll(t).forEach(el => el.remove()));
                 }"""
                 )
-                extracted_text = await page.inner_text("body")
-                if len(extracted_text.strip()) < 350:
-                    raise ValueError("Extracted text too short.")
-                return extracted_text
-            except Exception as e:
-                raise ValueError(f"Web extraction failed: {str(e)}") from e
+                return await page.inner_text("body")
             finally:
                 await browser.close()
 

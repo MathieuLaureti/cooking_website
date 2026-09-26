@@ -7,7 +7,7 @@ The 31B model does not fit on the 12GB GPU that served the previous 7B and visio
 ```mermaid
 flowchart LR
   admin[Admin draft] --> server[FastAPI]
-  server --> playwright[Playwright page text]
+  server --> playwright[Playwright page text or reader fallback]
   server --> image[Uploaded image]
   playwright --> gemini[Gemini gemma-4-31b-it]
   image --> gemini
