@@ -1,7 +1,11 @@
 # URL import retry on admin panel
 
 ## Status
-draft
+ready-for-github
+
+## Gates (record)
+- **Gate 1** (create GitHub issue): confirmed by client 2026-09-26 — issue [#17](https://github.com/MathieuLaureti/cooking_website/issues/17) (created before formal ask; acknowledged retroactively).
+- **Gate 2** (implement): confirmed by client 2026-09-26 — “do what you haven’t done and push”.
 
 ## Change type
 feature
