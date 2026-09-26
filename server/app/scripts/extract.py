@@ -13,6 +13,8 @@ GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:ge
 PAGE_CHAR_CAP = 40_000
 _MIN_PAGE_TEXT = 350
 _JINA_READER_PREFIX = "https://r.jina.ai/"
+_READER_FALLBACK_ATTEMPTS = 3
+_READER_RETRY_DELAY_SEC = 2.0
 _BOT_WALL_PHRASES = (
     "performing security verification",
     "checking your browser",
@@ -34,6 +36,17 @@ def _page_text_usable(text: str) -> bool:
     return not _looks_like_bot_wall(stripped)
 
 
+def _format_fetch_errors(
+    playwright_error: str | None, reader_error: str | None
+) -> str:
+    parts: list[str] = []
+    if playwright_error:
+        parts.append(playwright_error)
+    if reader_error and reader_error not in parts:
+        parts.append(reader_error)
+    return "; ".join(parts) if parts else "Web extraction failed"
+
+
 async def _fetch_reader_fallback(url: str) -> str:
     reader_url = f"{_JINA_READER_PREFIX}{url}"
     async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
@@ -51,6 +64,20 @@ async def _fetch_reader_fallback(url: str) -> str:
     if not _page_text_usable(text):
         raise ValueError("Reader fallback text too short.")
     return text
+
+
+async def _fetch_reader_fallback_with_retries(url: str) -> str:
+    last_error: Exception | None = None
+    for attempt in range(_READER_FALLBACK_ATTEMPTS):
+        try:
+            return await _fetch_reader_fallback(url)
+        except Exception as exc:
+            last_error = exc
+            if attempt + 1 < _READER_FALLBACK_ATTEMPTS:
+                await asyncio.sleep(_READER_RETRY_DELAY_SEC)
+    if last_error is not None:
+        raise last_error
+    raise ValueError("Reader fallback failed")
 
 _SYSTEM = (
     "Professional chef. Call emit_recipe once with the recipe from the source. "
@@ -345,9 +372,9 @@ class RecipeExtractor:
             playwright_error = str(e)
 
         try:
-            return await _fetch_reader_fallback(url)
+            return await _fetch_reader_fallback_with_retries(url)
         except Exception as reader_error:
-            detail = playwright_error or str(reader_error)
+            detail = _format_fetch_errors(playwright_error, str(reader_error))
             raise ValueError(f"Web extraction failed: {detail}") from reader_error
 
     async def _fetch_text_playwright(self, url: str) -> str:
