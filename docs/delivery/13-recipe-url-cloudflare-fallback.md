@@ -7,7 +7,7 @@ pr-open
 - Issue(s): [#13](https://github.com/MathieuLaureti/cooking_website/issues/13)
 - Input doc: `docs/input/2026-09-26-recipe-url-cloudflare-fallback.md`
 - Branch: `feature/13-recipe-url-cloudflare-fallback`
-- PR: **pending**
+- PR: https://github.com/MathieuLaureti/cooking_website/pull/14
 
 ## Summary
 
