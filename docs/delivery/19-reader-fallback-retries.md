@@ -7,7 +7,7 @@ pr-open
 - Issue(s): [#19](https://github.com/MathieuLaureti/cooking_website/issues/19)
 - Input doc: `docs/input/2026-09-26-reader-fallback-retries.md`
 - Branch: `fix/19-reader-fallback-retries`
-- PR: **pending**
+- PR: https://github.com/MathieuLaureti/cooking_website/pull/20
 
 ## Summary
 

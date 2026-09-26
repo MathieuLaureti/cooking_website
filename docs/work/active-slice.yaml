@@ -8,8 +8,13 @@ issues:
     url: https://github.com/MathieuLaureti/cooking_website/issues/19
     role: primary
 branch: fix/19-reader-fallback-retries
+pr:
+  number: 20
+  url: https://github.com/MathieuLaureti/cooking_website/pull/20
+  state: open
+delivery_report: docs/delivery/19-reader-fallback-retries.md
 labels:
   managed: agent-managed
-phase: implementing
+phase: pr_open
 updated_at: "2026-09-27T00:40:00Z"
 updated_by: planner
