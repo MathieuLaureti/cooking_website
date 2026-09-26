@@ -146,9 +146,27 @@ The server process starts one loop (`server/app/recipe_import_worker.py`) that c
 
 The Chrome extension is unpacked from `extension/`. In Chrome, open `chrome://extensions`, turn on Developer mode, and choose **Load unpacked** on that folder. The options page signs in with an admin account against the site base (default `https://www.homelabdu204.ca/recipes`). The popup sends the active tab to `POST /api/recipe_imports` and does not wait for Gemini. See [Recipe URL queue](features/recipe-import.md).
 
+## Server tests
+
+Pytest lives under `server/tests/`. The import worker is off during tests (`DISABLE_IMPORT_WORKER=1` in `tests/conftest.py`).
+
+| Check | Command |
+|-------|---------|
+| All tests | From repo root: `cd server && pytest` |
+| Unit only (no Postgres) | `cd server && pytest -m "not integration"` |
+| Integration (DB) | Postgres reachable via `.env` `DB_*` or `TEST_DATABASE_URL` / `DATABASE_URL`; then `cd server && pytest -m integration` |
+
+Integration tests run `alembic upgrade head` once per session against that database. Use a dedicated test database name (for example `cooking_test`) when pointing at a shared Postgres host so dev data is not mixed with test migrations.
+
+Install deps: same as the server image (`pip install -r server/requirements.txt`). In dev you can run inside the server container:
+
+```bash
+docker compose exec server pytest
+```
+
 ## Continuous integration
 
-Pushes and pull requests run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) on GitHub-hosted runners: `npm ci`, `npm run lint`, and `npm run build` in `console/`. Fix lint before merging to `master`.
+Pushes and pull requests run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) on GitHub-hosted runners: `npm ci`, `npm run lint`, and `npm run build` in `console/`. Fix lint before merging to `master`. A server pytest job is planned in issue #5.
 
 ## Continuous deployment (prod)
 

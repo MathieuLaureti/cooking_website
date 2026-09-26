@@ -6,6 +6,6 @@ Per-feature ship packets: changes, test evidence, PR title/body, ship checklist.
 
 | Report | Issue | Status |
 |--------|-------|--------|
-| *(none yet)* | | |
+| [1-pytest-harness](1-pytest-harness.md) | #1 | pr-open |
 
 Return to [documentation hub](../README.md).

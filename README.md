@@ -11,6 +11,8 @@ docker compose up -d --build
 
 Console dev: see [console/README.md](console/README.md).
 
+**Server tests:** `cd server && pytest` (see [docs/operations.md](docs/operations.md#server-tests)).
+
 ## Agent workflow
 
 This repo uses the **Orchestrator** stack (ideas → GitHub issues → planner loop). Overview: [docs/agents-system.md](docs/agents-system.md). Subagents: `.cursor/agents/`.

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -15,17 +16,24 @@ from app.router import alias_review, auth, match_checker, mcp_oauth, nutrition, 
 mcp_asgi = build_mcp_asgi_app()
 
 
+def _import_worker_disabled() -> bool:
+    return os.getenv("DISABLE_IMPORT_WORKER", "").lower() in ("1", "true", "yes")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    task = asyncio.create_task(import_worker())
+    task = None
+    if not _import_worker_disabled():
+        task = asyncio.create_task(import_worker())
     try:
         yield
     finally:
-        task.cancel()
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
+        if task is not None:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
 
 
 app = FastAPI(lifespan=combine_lifespans(lifespan, mcp_asgi.lifespan))
