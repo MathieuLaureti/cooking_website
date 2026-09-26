@@ -1,16 +1,20 @@
 import { useState } from 'react'
 import './App.css'
-import IngredientMatchChecker from './components/match_checker'
+import IngredientMatchChecker from './components/MatchChecker'
 import RecipeManager from "./components/RecipeManager"
 import Login from './components/Login'
 import Register from './components/Register'
-import AdminPanel from './components/AdminPanel'
-import { AuthProvider, useAuth } from './context/AuthContext'
+import AdminHome from './components/AdminHome'
+import MobileInstallButton from './components/MobileInstallButton'
+import { AuthProvider } from './context/AuthProvider'
+import { useAuth } from './context/auth-context'
 
 function AppContent() {
   const { user, isAdmin, isLoading, logout } = useAuth();
   const [activeComponent, setActiveComponent] = useState<'match' | 'recipe' | null>(null);
   const [authView, setAuthView] = useState<'login' | 'register'>('login');
+  const [surface, setSurface] = useState<'user' | 'admin'>('user');
+  const [focusFoodId, setFocusFoodId] = useState<number | null>(null);
 
   if (isLoading) {
     return (
@@ -31,32 +35,63 @@ function AppContent() {
       <header className="flex-none flex items-center justify-between">
         <span className="text-[10px] uppercase tracking-[0.2em] text-[#5E7161] font-bold">
           {user.username}
-          <span className="ml-2 text-[#FFA500]">{user.role}</span>
+          {isAdmin ? (
+            <button
+              type="button"
+              onClick={() => setSurface(current => current === 'admin' ? 'user' : 'admin')}
+              className="ml-2 px-2 py-1 text-[#FFA500]"
+            >
+              {surface === 'admin' ? 'user' : 'admin'}
+            </button>
+          ) : (
+            <span className="ml-2 text-[#FFA500]">{user.role}</span>
+          )}
         </span>
-        <button
-          onClick={logout}
-          className="text-[10px] uppercase tracking-widest text-[#5E7161] hover:text-red-400 font-bold"
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-3">
+          <MobileInstallButton />
+          <button
+            onClick={logout}
+            className="text-[10px] uppercase tracking-widest text-[#5E7161] hover:text-red-400 font-bold"
+          >
+            Sign out
+          </button>
+        </div>
       </header>
 
-      {isAdmin && <AdminPanel />}
+      {surface === 'admin' && isAdmin ? (
+        <AdminHome onOpenFood={(foodId) => {
+          setFocusFoodId(foodId);
+          setActiveComponent('match');
+          setSurface('user');
+        }} />
+      ) : (
+      <div className="flex-1 min-h-0 flex flex-col gap-2 w-full min-w-0">
+        <div
+          className={`panel-slot ${
+            activeComponent === 'match' ? 'panel-slot-expanded' : 'panel-slot-collapsed'
+          }`}
+        >
+          <IngredientMatchChecker
+            isActive={activeComponent === 'match'}
+            onSearchTrigger={() => setActiveComponent('match')}
+            focusFoodId={focusFoodId}
+            onFoodOpened={() => setFocusFoodId(null)}
+          />
+        </div>
 
-      <section className="flex-none">
-        <IngredientMatchChecker 
-          isActive={activeComponent === 'match'} 
-          onSearchTrigger={() => setActiveComponent('match')} 
-        />
-      </section>
-
-      <section className="flex-1 min-h-0">
-        <RecipeManager 
-          isActive={activeComponent === 'recipe'} 
-          onSearchTrigger={() => setActiveComponent('recipe')}
-          isAdmin={isAdmin}
-        />
-      </section>
+        <div
+          className={`panel-slot ${
+            activeComponent !== 'match' ? 'panel-slot-expanded' : 'panel-slot-collapsed'
+          }`}
+        >
+          <RecipeManager
+            isActive={activeComponent === 'recipe'}
+            onSearchTrigger={() => setActiveComponent('recipe')}
+            isAdmin={isAdmin}
+          />
+        </div>
+      </div>
+      )}
     </div>
   )
 }

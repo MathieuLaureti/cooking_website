@@ -1,5 +1,6 @@
+from datetime import datetime
 from typing import List, Optional, Tuple
-from sqlalchemy import ForeignKey, String, Text, Integer
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from app.database import Base
@@ -12,6 +13,21 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(String(16), nullable=False)
+
+
+class OAuthClient(Base):
+    __tablename__ = "oauth_client"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    client_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    client_secret_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    client_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    redirect_uris: Mapped[List[str]] = mapped_column(
+        JSONB, insert_default=[], server_default="[]"
+    )
+    token_endpoint_auth_method: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default="client_secret_post"
+    )
 
 
 class Dish(Base):
@@ -82,3 +98,100 @@ class MatchChecker(Base):
         insert_default=[], 
         server_default="[]"
     )
+
+
+class CatalogFood(Base):
+    __tablename__ = "catalog_food"
+    __table_args__ = (UniqueConstraint("source", "external_code"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source: Mapped[str] = mapped_column(String(16), nullable=False)
+    external_code: Mapped[str] = mapped_column(String(16), nullable=False)
+    name_en: Mapped[str] = mapped_column(String(255), nullable=False)
+    name_fr: Mapped[str] = mapped_column(String(255), nullable=False)
+    group_code: Mapped[Optional[str]] = mapped_column(String(8), nullable=True)
+    group_en: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    group_fr: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+
+    nutrients: Mapped[List["CatalogFoodNutrient"]] = relationship(
+        back_populates="food", cascade="all, delete-orphan"
+    )
+    aliases: Mapped[List["CatalogAlias"]] = relationship(
+        back_populates="food", cascade="all, delete-orphan"
+    )
+
+
+class CatalogNutrient(Base):
+    __tablename__ = "catalog_nutrient"
+    __table_args__ = (UniqueConstraint("source", "external_code"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source: Mapped[str] = mapped_column(String(16), nullable=False)
+    external_code: Mapped[str] = mapped_column(String(16), nullable=False)
+    symbol: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    name_en: Mapped[str] = mapped_column(String(255), nullable=False)
+    name_fr: Mapped[str] = mapped_column(String(255), nullable=False)
+    unit: Mapped[str] = mapped_column(String(32), nullable=False)
+    decimals: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    tagname: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+
+    foods: Mapped[List["CatalogFoodNutrient"]] = relationship(back_populates="nutrient")
+
+
+class CatalogFoodNutrient(Base):
+    __tablename__ = "catalog_food_nutrient"
+
+    food_id: Mapped[int] = mapped_column(
+        ForeignKey("catalog_food.id", ondelete="CASCADE"), primary_key=True
+    )
+    nutrient_id: Mapped[int] = mapped_column(
+        ForeignKey("catalog_nutrient.id", ondelete="CASCADE"), primary_key=True
+    )
+    amount_per_100g: Mapped[float] = mapped_column(Numeric(14, 6), nullable=False)
+
+    food: Mapped["CatalogFood"] = relationship(back_populates="nutrients")
+    nutrient: Mapped["CatalogNutrient"] = relationship(back_populates="foods")
+
+
+class CatalogAlias(Base):
+    __tablename__ = "catalog_alias"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    food_id: Mapped[int] = mapped_column(
+        ForeignKey("catalog_food.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    normalized: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    locale: Mapped[str] = mapped_column(String(2), nullable=False)
+
+    food: Mapped["CatalogFood"] = relationship(back_populates="aliases")
+
+
+class CatalogAliasReview(Base):
+    __tablename__ = "catalog_alias_review"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    query: Mapped[str] = mapped_column(String(255), nullable=False)
+    normalized: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    candidates: Mapped[list] = mapped_column(JSONB, nullable=False)
+    confidence: Mapped[Optional[float]] = mapped_column(Numeric(6, 4), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="pending")
+    food_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("catalog_food.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class RecipeUrlImport(Base):
+    __tablename__ = "recipe_url_import"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    url: Mapped[str] = mapped_column(String(2048), nullable=False)
+    normalized_url: Mapped[str] = mapped_column(String(2048), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="queued")
+    extract: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    recipe_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("recipe.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -12,6 +12,8 @@ from jose import JWTError, jwt
 JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-production")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "10080"))
+MCP_ACCESS_AUD = "mcp"
+MCP_ACCESS_EXPIRE_SECONDS = int(os.getenv("MCP_OAUTH_ACCESS_EXPIRE_SECONDS", "3600"))
 REGISTRATION_SECRET = os.getenv("REGISTRATION_SECRET", JWT_SECRET)
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -36,6 +38,54 @@ def create_access_token(user_id: int, username: str, role: str) -> str:
     expire = int(time.time()) + JWT_EXPIRE_MINUTES * 60
     payload = {"sub": str(user_id), "username": username, "role": role, "exp": expire}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def hash_client_secret(secret: str) -> str:
+    return hash_password(secret)
+
+
+def verify_client_secret(plain: str, hashed: str | None) -> bool:
+    if not hashed:
+        return plain == ""
+    return verify_password(plain, hashed)
+
+
+def create_mcp_access_token(
+    user_id: int,
+    username: str,
+    role: str,
+    *,
+    scope: str,
+    client_id: str,
+) -> str:
+    expire = int(time.time()) + MCP_ACCESS_EXPIRE_SECONDS
+    payload = {
+        "sub": str(user_id),
+        "username": username,
+        "role": role,
+        "aud": MCP_ACCESS_AUD,
+        "scope": scope,
+        "client_id": client_id,
+        "exp": expire,
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def decode_mcp_access_token(token: str) -> TokenUser | None:
+    try:
+        payload = jwt.decode(
+            token,
+            JWT_SECRET,
+            algorithms=[JWT_ALGORITHM],
+            audience=MCP_ACCESS_AUD,
+        )
+        return TokenUser(
+            id=int(payload["sub"]),
+            username=payload["username"],
+            role=payload["role"],
+        )
+    except (JWTError, KeyError, ValueError):
+        return None
 
 
 def decode_token(token: str) -> TokenUser:

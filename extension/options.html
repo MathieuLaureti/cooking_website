@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cooking recipe import</title>
+  <style>
+    body { font-family: sans-serif; background: #4A594D; color: #f4f1ea; margin: 0; }
+    main { max-width: 28rem; margin: 2rem auto; padding: 0 1rem; }
+    label { display: block; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 1rem 0 0.25rem; }
+    input { width: 100%; box-sizing: border-box; padding: 0.5rem; border: 0; border-radius: 0.25rem; }
+    button { margin-top: 1rem; padding: 0.5rem 1rem; background: #FFA500; border: 0; border-radius: 0.25rem; font-weight: 700; }
+    p { font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Cooking recipe import</h1>
+    <label for="base">Site</label>
+    <input id="base" type="url" value="https://www.homelabdu204.ca/recipes">
+    <label for="username">Username</label>
+    <input id="username" autocomplete="username">
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password">
+    <button id="save" type="button">Sign in</button>
+    <p id="status"></p>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

@@ -17,7 +17,8 @@ dateparser==1.2.2
 dnspython==2.8.0
 email-validator==2.3.0
 Faker==40.5.1
-fastapi==0.127.0
+fastapi==0.141.1
+fastmcp==4.0.10
 fastapi-cli==0.0.20
 fastapi-cloud-cli==0.8.0
 fastar==0.8.0
@@ -33,7 +34,7 @@ htmldate==1.9.4
 httpcore==1.0.9
 httptools==0.7.1
 httpx==0.28.1
-idna==3.11
+idna==3.18
 iniconfig==2.3.0
 itsdangerous==2.2.0
 Jinja2==3.1.6
@@ -66,7 +67,7 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
 python-jose[cryptography]==3.5.0
 python-engineio==4.13.1
-python-multipart==0.0.21
+python-multipart==0.0.26
 python-socketio==5.16.1
 pytz==2025.2
 PyYAML==6.0.3
@@ -82,7 +83,7 @@ shellingham==1.5.4
 simple-websocket==1.1.0
 six==1.17.0
 SQLAlchemy==2.0.45
-starlette==0.50.0
+starlette==1.7.0
 tld==0.13.1
 trafilatura==2.0.0
 typer==0.20.1

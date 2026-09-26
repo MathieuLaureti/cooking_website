@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "cooking-local": {
+      "type": "http",
+      "url": "http://localhost:81/mcp/"
+    },
+    "cooking-homelab": {
+      "type": "http",
+      "url": "https://www.homelabdu204.ca/recipes/mcp/"
+    }
+  }
+}

@@ -49,5 +49,13 @@ done
 echo "Postgres connection test successful"
 echo "Running migrations..."
 alembic upgrade head
+echo "Seeding admin user..."
+python -m app.seed_admin
+echo "Ensuring OAuth client from env..."
+python -m app.seed_oauth_client
+echo "Seeding match_checker from SQLite if empty..."
+python -m app.sqlitetopostgres
+echo "Seeding Canadian Nutrient File if empty..."
+python -m app.seed_cnf
 echo "Starting server..."
 exec "$@"

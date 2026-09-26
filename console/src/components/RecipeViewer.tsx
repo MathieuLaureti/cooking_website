@@ -21,7 +21,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({ recipe, dishName, isAdmin, 
       if (recipe.id) {
         try {
           await onDelete(recipe.id);
-        } catch (err) {
+        } catch {
           setIsDeleting(false);
         }
       }

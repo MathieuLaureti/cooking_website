@@ -1,56 +1,136 @@
+import re
+import unicodedata
+from typing import Any, Awaitable, Callable, List
+
+import orjson
 from fastapi import (
     APIRouter,
     Depends,
+    File,
     HTTPException,
-    status,
     Query,
+    UploadFile,
+    status,
 )
-import orjson
-from sqlalchemy.orm import Session
-from app.database import get_db
-from app.auth import TokenUser, get_current_user, require_admin
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from app.db_models.models import Dish, Recipe, RecipeComponent, Ingredient, Instruction
+
+from app.auth import TokenUser, get_current_user, require_admin
+from app.database import get_db
+from app.db_models.models import Dish, Ingredient, Instruction, Recipe, RecipeComponent
 from app.pydantic_models import recipes as models
-from typing import List, Any, Callable, Awaitable
-from ..scripts.APRWS import WebRecipeExtractor
-from ..scripts.APRIR import ImageRecipeExtractor
+
 from ..cache import cache
-import json
-import os
+from ..scripts.extract import RecipeExtractor
 
 router = APIRouter(prefix="/recipes", tags=[""])
+extractor = RecipeExtractor()
+_MAX_IMAGE_BYTES = 10 * 1024 * 1024
+
+
+def _plain(name: str) -> str:
+    decomposed = unicodedata.normalize("NFD", name)
+    stripped = "".join(c for c in decomposed if unicodedata.category(c) != "Mn")
+    return re.sub(r"\s+", " ", stripped).strip()
+
+
+async def _dish_names(db: AsyncSession) -> list[str]:
+    result = await db.execute(select(Dish.name).order_by(Dish.name))
+    return [name for name in result.scalars().all() if name]
+
+
+async def _dish_catalog(db: AsyncSession) -> list[dict]:
+    result = await db.execute(select(Dish.id, Dish.name).order_by(Dish.name))
+    return [
+        {"id": row.id, "name": row.name}
+        for row in result
+        if row.name
+    ]
+
+
+def _dish_context(dish_id: int | None, catalog: list[dict]) -> str:
+    if dish_id is not None:
+        match = next((d for d in catalog if d["id"] == dish_id), None)
+        name = match["name"] if match else f"id {dish_id}"
+        return f"The recipe is for the existing dish: {name} (id {dish_id}). Set dish_id to {dish_id}.\n\n"
+    lines = "\n".join(f"- id {d['id']}: {d['name']}" for d in catalog) or "(none yet)"
+    return (
+        "Existing dishes (set dish_id to one of these ids when the recipe fits):\n"
+        f"{lines}\n"
+        "Otherwise set dish_name to a short new dish name.\n\n"
+    )
+
+
+async def _resolve_dish(
+    db: AsyncSession, dish_id: int | None, dish_name: str | None
+) -> tuple[Dish, bool]:
+    if dish_id is not None:
+        result = await db.execute(select(Dish).where(Dish.id == dish_id))
+        dish = result.scalar_one_or_none()
+        if not dish:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Dish id : {dish_id} not found",
+            )
+        return dish, False
+
+    cleaned = _plain(dish_name or "")
+    if not cleaned:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Dish name is required",
+        )
+    key = cleaned.casefold()
+
+    async def match() -> Dish | None:
+        result = await db.execute(select(Dish))
+        for dish in result.scalars().all():
+            if dish.name and _plain(dish.name).casefold() == key:
+                return dish
+        return None
+
+    existing = await match()
+    if existing:
+        return existing, False
+
+    dish = Dish(name=cleaned)
+    db.add(dish)
+    try:
+        await db.flush()
+    except IntegrityError:
+        await db.rollback()
+        existing = await match()
+        if existing:
+            return existing, False
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Dish with name '{cleaned}' already exists.",
+        )
+    return dish, True
 
 
 async def _create_recipe_in_db(
-    payload: models.RecipeCreate, dish_id: int, db: AsyncSession
+    name: str,
+    components: list[models.Component],
+    db: AsyncSession,
+    dish_id: int | None = None,
+    dish_name: str | None = None,
 ):
-    # Check for Dish existence
-    dish_stmt = select(Dish).where(Dish.id == dish_id)
-    dish_result = await db.execute(dish_stmt)
-    if not dish_result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Dish id : {dish_id} not found",
-        )
+    dish, created = await _resolve_dish(db, dish_id, dish_name)
 
-    # Check for existing Recipe
-    recipe_stmt = select(Recipe).where(
-        Recipe.dish_id == dish_id, Recipe.name == payload.name
-    )
+    recipe_stmt = select(Recipe).where(Recipe.dish_id == dish.id, Recipe.name == name)
     recipe_result = await db.execute(recipe_stmt)
     if recipe_result.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"A recipe with name : {payload.name} already exists for this dish",
+            detail=f"A recipe with name : {name} already exists for this dish",
         )
 
-    # Construct object tree
     new_recipe = Recipe(
-        name=payload.name,
-        dish_id=dish_id,
+        name=name,
+        dish_id=dish.id,
         components=[
             RecipeComponent(
                 name=comp.name,
@@ -62,13 +142,15 @@ async def _create_recipe_in_db(
                     for i in comp.ingredients
                 ],
             )
-            for comp in payload.components
+            for comp in components
         ],
     )
 
     db.add(new_recipe)
     await db.commit()
-    await cache.delete(f"dish_recipes:{dish_id}")
+    await cache.delete(f"dish_recipes:{dish.id}")
+    if created:
+        await cache.delete("dishes:all")
     # Eager load relationships before returning to prevent lazy load errors during serialization
     stmt = (
         select(Recipe)
@@ -99,6 +181,7 @@ async def new_dish(
     new_dish_obj = Dish(name=dish.name)
     db.add(new_dish_obj)
     await db.commit()
+    await cache.delete("dishes:all")
 
     # Re-fetch for confirmation/ID
     stmt = select(Dish).where(Dish.name == dish.name)
@@ -125,6 +208,7 @@ async def edit_dish_by_id(
 
     dish_exist.name = dish.name
     await db.commit()
+    await cache.delete("dishes:all")
     # Manual attribute access works after commit if expire_on_commit=False
     # Otherwise, use a select stmt or await db.refresh(dish_exist)
     return {"name": dish_exist.name, "id": dish_exist.id}
@@ -157,6 +241,8 @@ async def delete_dish_by_id(
 
     await db.delete(dish_exist)
     await db.commit()
+    await cache.delete("dishes:all")
+    await cache.delete(f"dish_recipes:{dish_id}")
     return {"detail": "Dish deleted successfully"}
 
 
@@ -181,7 +267,24 @@ async def manual_new_recipe(
     db: AsyncSession = Depends(get_db),
     _admin: TokenUser = Depends(require_admin),
 ):
-    return await _create_recipe_in_db(payload, dish_id, db)
+    return await _create_recipe_in_db(
+        payload.name, payload.components, db, dish_id=dish_id
+    )
+
+
+@router.post("/recipe", response_model=models.RecipeFull)
+async def manual_new_recipe_by_name(
+    payload: models.RecipeCreate,
+    db: AsyncSession = Depends(get_db),
+    _admin: TokenUser = Depends(require_admin),
+):
+    return await _create_recipe_in_db(
+        payload.name,
+        payload.components,
+        db,
+        dish_id=payload.dish_id or None,
+        dish_name=payload.dish_name,
+    )
 
 
 @router.get("/dishes", response_model=List[models.DishSearch])
@@ -190,7 +293,9 @@ async def get_dish_list(
     _user: TokenUser = Depends(get_current_user),
 ):
     async def fetch_data():
-        result = await db.execute(select(Dish.id, Dish.name))
+        result = await db.execute(
+            select(Dish.id, Dish.name).order_by(Dish.name)
+        )
         return [dict(r) for r in result.mappings().all()]
 
     return await fetch_with_cache("dishes:all", 3600, fetch_data)
@@ -203,7 +308,11 @@ async def get_recipe_list_of_dish(
     _user: TokenUser = Depends(get_current_user),
 ):
     async def fetch_data():
-        stmt = select(Recipe.id, Recipe.name).where(Recipe.dish_id == dish_id)
+        stmt = (
+            select(Recipe.id, Recipe.name)
+            .where(Recipe.dish_id == dish_id)
+            .order_by(Recipe.name)
+        )
         result = await db.execute(stmt)
         return [dict(r) for r in result.mappings().all()]
 
@@ -242,23 +351,88 @@ async def get_recipe_by_id(
     return await fetch_with_cache(f"full_recipe:{recipe_id}", 3600, fetch_data)
 
 
-OLLAMA_URL = os.getenv("OLLAMA_URL", None)
-MODEL_NAME = os.getenv("MODEL_NAME", None)
-IMAGE_MODEL_NAME = os.getenv("IMAGE_MODEL_NAME", None)
-web_tool = WebRecipeExtractor(OLLAMA_URL, "qwen2.5:7b")
-img_tool = ImageRecipeExtractor(OLLAMA_URL, "llama3.2-vision:11b")
+def _image_mime(data: bytes, content_type: str | None) -> str:
+    if content_type and content_type.startswith("image/"):
+        mime = content_type.split(";", 1)[0].strip()
+        return "image/jpeg" if mime == "image/jpg" else mime
+    if data.startswith(b"\xff\xd8"):
+        return "image/jpeg"
+    if data.startswith(b"\x89PNG"):
+        return "image/png"
+    if data.startswith(b"RIFF") and data[8:12] == b"WEBP":
+        return "image/webp"
+    if data.startswith(b"GIF8"):
+        return "image/gif"
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported image"
+    )
 
 
-@router.get("/recipe_url/{dish_id}", response_model=models.RecipeFull)
+async def _import_extracted(extracted, db: AsyncSession, dish_id: int | None):
+    return await _create_recipe_in_db(
+        extracted.name,
+        extracted.components,
+        db,
+        dish_id=dish_id,
+        dish_name=None if dish_id is not None else extracted.dish_name,
+    )
+
+
+@router.get("/recipe_url", response_model=models.RecipeFull)
 async def get_recipe_by_url(
-    dish_id: int,
     url: str = Query(...),
+    dish_id: int | None = Query(None),
     db: AsyncSession = Depends(get_db),
     _admin: TokenUser = Depends(require_admin),
 ):
     try:
-        data = await web_tool.extract(url, dish_id)
-        return await _create_recipe_in_db(data, dish_id, db)
+        names = None if dish_id is not None else await _dish_names(db)
+        extracted = await extractor.from_url(url, names)
+        return await _import_extracted(extracted, db, dish_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/recipe_image", response_model=models.RecipeFull)
+async def recipe_from_image(
+    file: UploadFile = File(...),
+    dish_id: int | None = Query(None),
+    db: AsyncSession = Depends(get_db),
+    _admin: TokenUser = Depends(require_admin),
+):
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Empty image"
+        )
+    if len(raw) > _MAX_IMAGE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Image too large"
+        )
+    mime = _image_mime(raw, file.content_type)
+    try:
+        names = None if dish_id is not None else await _dish_names(db)
+        extracted = await extractor.from_image(raw, mime, names)
+        return await _import_extracted(extracted, db, dish_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/recipe_chat", response_model=models.RecipeChatResponse)
+async def recipe_chat(
+    payload: models.RecipeChatRequest,
+    db: AsyncSession = Depends(get_db),
+    _admin: TokenUser = Depends(require_admin),
+):
+    catalog = await _dish_catalog(db)
+    context = _dish_context(payload.dish_id, catalog)
+    try:
+        reply, recipes = await extractor.chat(payload, context)
+        return models.RecipeChatResponse(reply=reply, recipes=recipes)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -278,8 +452,11 @@ async def delete_recipe_by_id(
             status_code=status.HTTP_404_NOT_FOUND, detail="Recipe not found"
         )
 
+    dish_id = recipe_exist.dish_id
     await db.delete(recipe_exist)
     await db.commit()
+    await cache.delete(f"dish_recipes:{dish_id}")
+    await cache.delete(f"full_recipe:{recipe_id}")
     return {"detail": "Recipe deleted successfully"}
 
 
@@ -323,6 +500,8 @@ async def edit_recipe_by_id(
         recipe_exist.components.append(new_component)
 
     await db.commit()
+    await cache.delete(f"full_recipe:{recipe_id}")
+    await cache.delete(f"dish_recipes:{recipe_exist.dish_id}")
 
     # Re-fetch tree for response serialization
     final_stmt = (

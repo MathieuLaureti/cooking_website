@@ -3,6 +3,7 @@ FROM node:20-alpine AS console-build
 WORKDIR /app
 
 COPY console/package.json console/package-lock.json ./
+COPY console/scripts ./scripts
 RUN npm ci
 
 COPY console/ ./

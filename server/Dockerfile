@@ -35,6 +35,8 @@ COPY ./app /code/app
 COPY ./alembic.ini /code/alembic.ini
 COPY ./alembic /code/alembic
 COPY ./wait-for-db.sh /code/wait-for-db.sh
+COPY ./db.sqlite3 /code/db.sqlite3
+COPY ./seed/cnf /code/seed/cnf
 RUN chmod +x /code/wait-for-db.sh
 
 ENTRYPOINT ["./wait-for-db.sh"]
@@ -43,4 +45,4 @@ FROM base AS dev
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "6666", "--reload"]
 
 FROM base AS prod
-CMD ["gunicorn", "app.main:app", "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:6666", "--log-level", "warning"]
+CMD ["gunicorn", "app.main:app", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:6666", "--log-level", "info", "--access-logfile", "-"]

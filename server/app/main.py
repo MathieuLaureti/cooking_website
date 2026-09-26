@@ -1,22 +1,43 @@
+import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.router import auth, match_checker, recipes
-from app.seed_admin import seed_admin_if_needed
+logging.getLogger("app.mcp_server").setLevel(logging.INFO)
+logging.getLogger("app.mcp_auth").setLevel(logging.INFO)
+from fastmcp.utilities.lifespan import combine_lifespans
+
+from app.mcp_server import build_mcp_asgi_app
+from app.recipe_import_worker import import_worker
+from app.router import alias_review, auth, match_checker, mcp_oauth, nutrition, recipe_import, recipes
+
+mcp_asgi = build_mcp_asgi_app()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await seed_admin_if_needed()
-    yield
+    task = asyncio.create_task(import_worker())
+    try:
+        yield
+    finally:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=combine_lifespans(lifespan, mcp_asgi.lifespan))
 
+app.include_router(mcp_oauth.router)
 app.include_router(auth.router)
 app.include_router(match_checker.router)
+app.include_router(nutrition.router)
+app.include_router(alias_review.router)
 app.include_router(recipes.router)
+app.include_router(recipe_import.router)
+app.mount("/mcp", mcp_asgi)
 
 
 @app.get("/health")

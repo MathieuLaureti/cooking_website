@@ -1,54 +1,69 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { apiClient } from '../api/client';
+import React, { useEffect, useState } from 'react';
+import { API_PREFIX, apiClient } from '../api/client';
 
-const AdminPanel: React.FC = () => {
+async function fetchRegistrationCode(): Promise<{ code: string; expiresIn: number } | null> {
+  try {
+    const res = await apiClient.get(`${API_PREFIX}/auth/registration-code`);
+    return { code: res.data.code, expiresIn: res.data.expires_in_seconds };
+  } catch {
+    return null;
+  }
+}
+
+const AdminPanel: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const [code, setCode] = useState('');
   const [expiresIn, setExpiresIn] = useState(0);
-  const [expanded, setExpanded] = useState(false);
-
-  const fetchCode = useCallback(async () => {
-    try {
-      const res = await apiClient.get('/api/auth/registration-code');
-      setCode(res.data.code);
-      setExpiresIn(res.data.expires_in_seconds);
-    } catch {
-      // ignore
-    }
-  }, []);
+  const [expanded, setExpanded] = useState(embedded);
 
   useEffect(() => {
-    if (!expanded) return;
-    fetchCode();
-    const interval = setInterval(fetchCode, 30000);
-    return () => clearInterval(interval);
-  }, [expanded, fetchCode]);
+    if (!expanded && !embedded) return;
+    let alive = true;
+    const load = async () => {
+      const data = await fetchRegistrationCode();
+      if (!alive || !data) return;
+      setCode(data.code);
+      setExpiresIn(data.expiresIn);
+    };
+    void load();
+    const interval = setInterval(() => void load(), 30000);
+    return () => {
+      alive = false;
+      clearInterval(interval);
+    };
+  }, [expanded, embedded]);
 
   useEffect(() => {
     if (!expanded || expiresIn <= 0) return;
     const timer = setInterval(() => {
       setExpiresIn((prev) => {
         if (prev <= 1) {
-          fetchCode();
+          void fetchRegistrationCode().then((data) => {
+            if (!data) return;
+            setCode(data.code);
+            setExpiresIn(data.expiresIn);
+          });
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [expanded, expiresIn, fetchCode]);
+  }, [expanded, expiresIn]);
 
   return (
     <div className="bg-[#374239] rounded border border-white/5 mb-4">
-      <button
-        type="button"
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-2 px-4 text-[10px] uppercase tracking-[0.2em] text-[#5E7161] font-bold hover:text-[#FFA500] transition-colors"
-      >
-        <span>Admin — Registration Code</span>
-        <span>{expanded ? '▲' : '▼'}</span>
-      </button>
+      {!embedded && (
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="w-full flex items-center justify-between p-2 px-4 text-[10px] uppercase tracking-[0.2em] text-[#5E7161] font-bold hover:text-[#FFA500] transition-colors"
+        >
+          <span>Admin — Registration Code</span>
+          <span>{expanded ? '▲' : '▼'}</span>
+        </button>
+      )}
 
-      {expanded && (
+      {(expanded || embedded) && (
         <div className="px-4 pb-4 border-t border-white/5 pt-4">
           <p className="text-[9px] uppercase tracking-widest text-[#5E7161] font-bold mb-2">
             Share this code to register new users

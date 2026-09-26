@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Cooking">
+  <rect width="512" height="512" fill="#4A594D"/>
+  <circle cx="256" cy="220" r="120" fill="none" stroke="#FFA500" stroke-width="28"/>
+  <path d="M256 340 L256 400 M216 380 L296 380" stroke="#5E7161" stroke-width="24" stroke-linecap="round"/>
+</svg>

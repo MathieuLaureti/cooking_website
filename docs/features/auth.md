@@ -8,31 +8,50 @@ Two roles:
 
 | Role | Access |
 |------|--------|
-| `admin` | Read everything + create/edit/delete recipes + AI URL import + view registration code |
+| `admin` | Read everything + create/edit/delete recipes + AI URL import + admin screen (registration code and alias queue) |
 | `user` | Read-only: ingredient pairings and recipes |
 
-New accounts register with a **7-digit code** that rotates every 60 seconds. Only admins can see the current code (admin panel in the UI). The admin shares the code manually to invite new users.
+New accounts register with a **7-digit code** that rotates every 60 seconds. Only admins can see the current code, on the admin screen. The admin shares the code manually to invite new users.
 
 ## User flow
+
+```mermaid
+flowchart TD
+  visit[Open the app] --> gate{JWT in localStorage}
+  gate -->|no| login[Login or register]
+  login --> register[Register with 7-digit code]
+  register --> login
+  login --> token[Store JWT]
+  gate -->|yes| app[Match checker and recipes]
+  token --> app
+  app --> admin{role is admin}
+  admin -->|yes| toggle[Yellow admin button opens the admin screen]
+  admin -->|no| readOnly[Read-only pairings and recipes]
+  toggle --> userBtn[Yellow user button returns to pairings and recipes]
+  app --> signOut[Sign out clears the token]
+  signOut --> login
+```
 
 1. Visit app → login screen (no content visible).
 2. **Register**: username, password (min 6 chars), 7-digit code from admin → account created with `user` role → redirect to login.
 3. **Login**: username + password → JWT stored in `localStorage` → full app loads.
-4. **Admin panel** (admin only): expandable section showing live registration code + countdown.
+4. **Admin** (admin only): the yellow role label is a button. It opens the admin screen and, on that screen, reads `user` and returns here. The registration code and the alias queue live on that screen. See [Admin](admin.md).
 5. **Sign out**: clears token, returns to login.
 
 ## Bootstrap
 
-On first server start, if the `user` table is empty and `ADMIN_USERNAME` / `ADMIN_PASSWORD` are set in `.env`, one admin account is created automatically.
+On first server start (or whenever `ADMIN_USERNAME` is missing from the DB), if `ADMIN_USERNAME` / `ADMIN_PASSWORD` are set in `.env`, an admin account is created. On subsequent starts the password is synced from `ADMIN_PASSWORD` so `.env` remains the source of truth.
 
 ## UI
 
-- `console/src/context/AuthContext.tsx` — login, register, logout, JWT decode, `isAdmin`
-- `console/src/api/client.ts` — axios interceptor attaches Bearer token; 401 clears token
+- `console/src/context/AuthProvider.tsx` — session provider (login, register, logout)
+- `console/src/context/auth-context.ts` — `useAuth`, JWT decode from stored token, `isAdmin`
+- `console/src/api/client.ts` — `API_PREFIX` (`/api` dev, `/recipes/api` prod), axios interceptor attaches Bearer token; 401 clears token
 - `console/src/components/Login.tsx` — sign-in form
 - `console/src/components/Register.tsx` — registration form with code field
-- `console/src/components/AdminPanel.tsx` — registration code display (admin only)
-- `console/src/App.tsx` — auth gate; mounts content only when logged in
+- `console/src/components/AdminPanel.tsx` — registration code, shown on the admin screen
+- `console/src/components/AdminHome.tsx` — admin screen
+- `console/src/App.tsx` — auth gate; yellow `admin` / `user` switch for an admin account
 
 ## Backend
 

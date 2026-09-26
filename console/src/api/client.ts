@@ -1,5 +1,11 @@
 import axios from 'axios';
 
+/** `/api` in dev; `/recipes/api` when the prod Vite base is `/recipes/`. */
+export const API_PREFIX = `${import.meta.env.BASE_URL.replace(/\/?$/, '')}/api`.replace(
+  /\/+/g,
+  '/',
+);
+
 const TOKEN_KEY = 'auth_token';
 
 export function getToken(): string | null {

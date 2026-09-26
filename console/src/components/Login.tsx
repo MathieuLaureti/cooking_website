@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/auth-context';
 
 interface LoginProps {
   onShowRegister: () => void;
@@ -18,8 +18,8 @@ const Login: React.FC<LoginProps> = ({ onShowRegister }) => {
     setLoading(true);
     try {
       await login(username, password);
-    } catch {
-      setError('Could not sign in. Check your credentials or try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not sign in. Try again.');
     } finally {
       setLoading(false);
     }
