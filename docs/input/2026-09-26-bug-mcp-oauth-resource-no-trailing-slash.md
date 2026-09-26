@@ -15,7 +15,6 @@ Grok Bot cloud connector compares the MCP server URL to OAuth protected-resource
 ## Scope
 - `mcp_resource_url()` in `server/app/mcp_oauth_config.py`
 - Docs + unit test
-- Repo always-on rule so agents do not deploy prod before PR
 
 ## Note
 Fix was briefly live on prod via manual `docker compose` before this slice; merge + CD will reconcile.

@@ -8,7 +8,6 @@ https://github.com/MathieuLaureti/cooking_website/pull/16
 
 ## What shipped (in PR)
 - `mcp_resource_url()` returns `…/mcp` without trailing slash.
-- `.cursor/rules/code-change-pipeline.mdc` blocks pre-PR prod deploy.
 - Docs + `test_mcp_oauth_config.py`.
 
 ## Off-pipeline note

@@ -192,8 +192,6 @@ Fix failing jobs before merging to `master`. Server job uses env `DB_*` pointing
 
 Prod redeploys automatically when `master` is pushed to GitHub. A self-hosted GitHub Actions runner on this host runs [`.github/workflows/deploy-prod.yml`](../.github/workflows/deploy-prod.yml), which calls [`scripts/deploy-prod.sh`](../scripts/deploy-prod.sh).
 
-**Agents:** do not run `docker compose -f docker-compose.prod.yml build|up` by hand; that bypasses git (`deploy-prod.sh` resets to `origin/master`) and review. Use issue → PR → merge, then CD—or `emergency deploy override` from the user only.
-
 ### One-time runner setup
 
 Run on this host (requires `gh` authenticated and Docker without sudo):
