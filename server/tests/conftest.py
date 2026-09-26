@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import os
-from collections.abc import AsyncIterator
+import uuid
+from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,7 @@ _SERVER_ROOT = Path(__file__).resolve().parents[1]
 # Apply before any `app` import (database URL is read at import time).
 os.environ.setdefault("JWT_SECRET", "pytest-jwt-secret")
 os.environ.setdefault("DISABLE_IMPORT_WORKER", "1")
+os.environ.setdefault("SQLALCHEMY_POOL_NULL", "1")
 if url := os.environ.get("TEST_DATABASE_URL"):
     os.environ["DATABASE_URL"] = url
 
@@ -79,3 +81,40 @@ async def db_session(migrated_db: None) -> AsyncIterator[AsyncSession]:
 
     async with AsyncSessionLocal() as session:
         yield session
+
+
+@pytest.fixture
+async def test_users(db_session: AsyncSession) -> dict[str, object]:
+    from app.auth import hash_password
+    from app.db_models.models import User
+
+    tag = uuid.uuid4().hex[:10]
+    admin = User(
+        username=f"t_admin_{tag}",
+        password_hash=hash_password("adminpass"),
+        role="admin",
+    )
+    regular = User(
+        username=f"t_user_{tag}",
+        password_hash=hash_password("userpass"),
+        role="user",
+    )
+    db_session.add_all([admin, regular])
+    await db_session.commit()
+    await db_session.refresh(admin)
+    await db_session.refresh(regular)
+    return {"admin": admin, "user": regular}
+
+
+@pytest.fixture
+def make_token() -> Callable[..., str]:
+    from app.auth import create_access_token
+
+    def _factory(user) -> str:
+        return create_access_token(user.id, user.username, user.role)
+
+    return _factory
+
+
+def bearer(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}

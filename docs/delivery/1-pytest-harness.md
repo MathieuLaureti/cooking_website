@@ -1,7 +1,7 @@
 # Delivery: Server pytest harness and Postgres fixtures
 
 ## Status
-pr-open
+merged
 
 ## Links
 - Issue(s): [#1](https://github.com/MathieuLaureti/cooking_website/issues/1)

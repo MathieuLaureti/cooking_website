@@ -21,3 +21,43 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
+
+  server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: cooking_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test -d cooking_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: cooking_test
+      JWT_SECRET: ci-test-jwt-secret
+      DISABLE_IMPORT_WORKER: "1"
+      SQLALCHEMY_POOL_NULL: "1"
+      MCP_API_KEY: ci-mcp-test-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: server/requirements.txt
+      - run: pip install -r requirements.txt
+      - run: alembic upgrade head
+      - run: pytest -v

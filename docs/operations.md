@@ -158,15 +158,35 @@ Pytest lives under `server/tests/`. The import worker is off during tests (`DISA
 
 Integration tests run `alembic upgrade head` once per session against that database. Use a dedicated test database name (for example `cooking_test`) when pointing at a shared Postgres host so dev data is not mixed with test migrations.
 
+Pytest sets `SQLALCHEMY_POOL_NULL=1` (see `server/tests/conftest.py`) so async SQLAlchemy does not reuse connections across event loops.
+
 Install deps: same as the server image (`pip install -r server/requirements.txt`). In dev you can run inside the server container:
 
 ```bash
 docker compose exec server pytest
 ```
 
+## Manual browser smoke (optional)
+
+Homelab or local dev with stack up (`docker compose`, port `81`):
+
+1. Open `http://localhost:81`, log in as admin.
+2. Tap the yellow **admin** control, confirm registration code and alias queue load.
+3. Tap **user**, confirm pairings/recipes load.
+4. Optional: install PWA from the install affordance ([mobile PWA](features/mobile-pwa.md)).
+
+Automated Playwright in CI is deferred; use this checklist before prod deploy when UI changed.
+
 ## Continuous integration
 
-Pushes and pull requests run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) on GitHub-hosted runners: `npm ci`, `npm run lint`, and `npm run build` in `console/`. Fix lint before merging to `master`. A server pytest job is planned in issue #5.
+Pushes and pull requests run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) on GitHub-hosted runners:
+
+| Job | Working dir | Steps |
+|-----|-------------|--------|
+| **console** | `console/` | `npm ci`, `npm run lint`, `npm run build` |
+| **server** | `server/` | Postgres 16 service, `pip install`, `alembic upgrade head`, `pytest -v` |
+
+Fix failing jobs before merging to `master`. Server job uses env `DB_*` pointing at the CI Postgres service and `DISABLE_IMPORT_WORKER=1`.
 
 ## Continuous deployment (prod)
 
