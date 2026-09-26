@@ -1,20 +1,7 @@
-# Active agent-managed slice — feature #17
+# No active agent-managed slice — last merged: #17 (archive/url-import-retry-2026-09-26.yaml)
 version: 1
 repo: MathieuLaureti/cooking_website
-input_doc: docs/input/2026-09-26-url-import-retry.md
-delivery_mode: single
-issues:
-  - number: 17
-    url: https://github.com/MathieuLaureti/cooking_website/issues/17
-    role: primary
-branch: feature/17-url-import-retry
-pr:
-  number: 18
-  url: https://github.com/MathieuLaureti/cooking_website/pull/18
-  state: open
-delivery_report: docs/delivery/17-url-import-retry.md
-labels:
-  managed: agent-managed
-phase: pr_open
-updated_at: "2026-09-27T00:15:00Z"
-updated_by: documenter
+issues: []
+phase: idle
+updated_at: "2026-09-26T23:18:00Z"
+updated_by: github-ship-sync

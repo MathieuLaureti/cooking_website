@@ -1,7 +1,7 @@
 # Delivery: Admin retry for failed URL imports
 
 ## Status
-pr-open
+merged
 
 ## Links
 - Issue(s): [#17](https://github.com/MathieuLaureti/cooking_website/issues/17)
