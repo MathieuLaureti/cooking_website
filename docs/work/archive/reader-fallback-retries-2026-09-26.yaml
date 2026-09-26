@@ -1,0 +1,19 @@
+version: 1
+repo: MathieuLaureti/cooking_website
+delivery_mode: single
+input_doc: docs/input/2026-09-26-reader-fallback-retries.md
+issues:
+  - number: 19
+    url: https://github.com/MathieuLaureti/cooking_website/issues/19
+    role: primary
+branch: fix/19-reader-fallback-retries
+pr:
+  number: 20
+  url: https://github.com/MathieuLaureti/cooking_website/pull/20
+  state: merged
+delivery_report: docs/delivery/19-reader-fallback-retries.md
+labels:
+  managed: agent-managed
+phase: merged
+updated_at: "2026-09-26T23:39:00Z"
+updated_by: github-ship-sync
