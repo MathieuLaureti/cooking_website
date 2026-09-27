@@ -272,6 +272,27 @@ Import list items also include `pipeline_step`, `pipeline_label`, and `ai_next_a
 - Response: the import item.
 - Errors: `404` missing row; `400` when the row is not `failed`/`ai_wait`, or when another row for the same normalized URL is already active; `403` for a non-admin
 
+## Catalog sanity (admin preview)
+
+Code: `server/app/router/catalog_sanity.py`. Prefix `/catalog_sanity`. **Auth: admin.** Background worker: `server/app/catalog_sanity_worker.py` (disabled when `DISABLE_CATALOG_SANITY_WORKER=1`). Runs the same layered CNF preview as `scripts/catalog_sanity_preview.py` and stores progress on `catalog_sanity_run`. Does not mutate `catalog_food`.
+
+### `POST /api/catalog_sanity/runs`
+
+- Purpose: enqueue one preview run (`status` → `queued`).
+- Request body: `{ "use_laya": boolean }` — when true, layer 3 calls Laya on survivors (long-running).
+- Response: run item with `progress_label` when applicable.
+- Errors: `409` when another run is already `queued` or `running`; `403` for a non-admin
+
+### `GET /api/catalog_sanity/runs`
+
+- Purpose: list the 10 most recent runs (newest first) for the admin UI poll.
+- Response: array of run items (`status`, `pipeline_layer`, `layer_current`, `layer_total`, `drops_count`, `progress_label`, …).
+
+### `GET /api/catalog_sanity/runs/{run_id}`
+
+- Purpose: one run including `result_drops` when `status` is `completed`.
+- Errors: `404` missing run; `403` for a non-admin
+
 ### `POST /api/recipes/recipe_image?dish_id=`
 
 - Auth: **admin**

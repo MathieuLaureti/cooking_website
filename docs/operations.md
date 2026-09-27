@@ -172,6 +172,8 @@ docker compose exec server python scripts/catalog_sanity_preview.py --laya
 
 Columns: `id`, `layer`, `reason`, `name_en`, `name_fr`, `group_en`. A summary line on stderr reports totals.
 
+The admin screen can start the same pipeline in the background (`POST /api/catalog_sanity/runs`); progress is stored on `catalog_sanity_run` and polled every few seconds. Set `DISABLE_CATALOG_SANITY_WORKER=1` to skip the worker (pytest sets this automatically).
+
 ## Recipe URL queue
 
 The server process starts one loop (`server/app/recipe_import_worker.py`) that claims `recipe_url_import` rows one at a time. It does not need a separate container. A restart sets leftover `running` rows back to `queued`.

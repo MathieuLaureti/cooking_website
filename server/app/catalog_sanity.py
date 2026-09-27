@@ -5,11 +5,15 @@ Preview only — nothing is written to the database. See ``scripts/catalog_sanit
 
 from __future__ import annotations
 
+import asyncio
 from collections import defaultdict
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
 from app.ingredient_match import AUTO_ACCEPT, NONE, Food, decide
 from app.seed_cnf import normalize_name
+
+ProgressCallback = Callable[[str, int, int, int], Awaitable[None] | None]
 
 # CNF groups where dried / dehydrated forms are normal pantry items.
 DRIED_OK_GROUP_CODES = frozenset({"2", "9", "11", "12", "16", "20"})
@@ -47,6 +51,32 @@ class SanityDrop:
     food: Food
     layer: str
     reason: str
+
+
+def drop_to_dict(drop: SanityDrop) -> dict:
+    food = drop.food
+    return {
+        "food_id": food.id,
+        "layer": drop.layer,
+        "reason": drop.reason,
+        "name_en": food.name_en,
+        "name_fr": food.name_fr,
+        "group_en": food.group_en,
+    }
+
+
+async def _emit_progress(
+    on_progress: ProgressCallback | None,
+    layer: str,
+    current: int,
+    total: int,
+    drops_count: int,
+) -> None:
+    if on_progress is None:
+        return
+    result = on_progress(layer, current, total, drops_count)
+    if asyncio.iscoroutine(result):
+        await result
 
 
 def comma_parts(name_en: str) -> tuple[str, ...]:
@@ -171,34 +201,41 @@ async def classify_foods(
     foods: list[Food],
     *,
     use_laya: bool = False,
+    on_progress: ProgressCallback | None = None,
 ) -> list[SanityDrop]:
     """Return all foods the pipeline would hide from a cooking catalog."""
     drops: list[SanityDrop] = []
     seen_ids: set[int] = set()
     survivors: list[Food] = []
+    total_foods = len(foods)
 
-    for food in foods:
+    for index, food in enumerate(foods, start=1):
         reason = apply_layer1(food)
         if reason is not None:
             drops.append(SanityDrop(food, "layer1", reason))
             seen_ids.add(food.id)
         else:
             survivors.append(food)
+        if index == total_foods or index % 250 == 0:
+            await _emit_progress(on_progress, "Layer 1", index, total_foods, len(drops))
 
+    await _emit_progress(on_progress, "Layer 2", 0, 1, len(drops))
     for drop in apply_layer2_cluster(survivors):
         if drop.food.id in seen_ids:
             continue
         drops.append(drop)
         seen_ids.add(drop.food.id)
+    await _emit_progress(on_progress, "Layer 2", 1, 1, len(drops))
 
     if use_laya:
-        for food in survivors:
-            if food.id in seen_ids:
-                continue
-            hit = apply_layer3_laya(food)
+        laya_queue = [food for food in survivors if food.id not in seen_ids]
+        layer_total = len(laya_queue)
+        for index, food in enumerate(laya_queue, start=1):
+            hit = await asyncio.to_thread(apply_layer3_laya, food)
             if hit is not None:
                 drops.append(hit)
                 seen_ids.add(food.id)
+            await _emit_progress(on_progress, "Layer 3", index, layer_total, len(drops))
 
     drops.sort(key=lambda row: (row.food.name_en.lower(), row.food.id))
     return drops

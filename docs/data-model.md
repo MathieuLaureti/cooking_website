@@ -210,6 +210,26 @@ erDiagram
 - Unique `normalized_url` while `status` is `queued`, `running`, `ready`, or `ai_wait` (`uq_recipe_url_import_active`).
 - Notes: the batch worker writes `extract` here and does not insert `dish` or `recipe` until `POST /api/recipe_imports/{id}/keep`. Migrations `c7e1b4a92d10`, `e1a9c4d82f10`.
 
+### `catalog_sanity_run`
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | integer | PK |
+| `status` | `varchar(16)` | not null, default `queued` (`queued`, `running`, `completed`, `failed`) |
+| `use_laya` | boolean | not null, default false |
+| `total_foods` | integer | nullable. CNF row count at start |
+| `pipeline_layer` | `varchar(32)` | nullable. e.g. `Layer 1`, `Layer 3` while running |
+| `layer_current` | integer | nullable |
+| `layer_total` | integer | nullable |
+| `drops_count` | integer | not null, default `0` |
+| `result_drops` | `jsonb` | nullable. Array of `{ food_id, layer, reason, name_en, name_fr, group_en }` when `completed` |
+| `error` | text | nullable |
+| `created_at` | `timestamptz` | not null, default now |
+| `started_at` | `timestamptz` | nullable |
+| `finished_at` | `timestamptz` | nullable |
+
+- Notes: admin starts a run via `POST /api/catalog_sanity/runs`. `server/app/catalog_sanity_worker.py` claims one `queued` row at a time and runs `server/app/catalog_sanity.py` (same rules as `scripts/catalog_sanity_preview.py`). Does not hide foods in `catalog_food` — preview only. Migration `f8a2c1d93e04`.
+
 ## Legacy / seed
 
 - File: `server/db.sqlite3`, Django table `api_ingredient` (`title`, `avoid`, `afinities`, `matchs` — original spellings).

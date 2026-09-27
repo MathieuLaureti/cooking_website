@@ -16,6 +16,7 @@ _SERVER_ROOT = Path(__file__).resolve().parents[1]
 # Apply before any `app` import (database URL is read at import time).
 os.environ.setdefault("JWT_SECRET", "pytest-jwt-secret")
 os.environ.setdefault("DISABLE_IMPORT_WORKER", "1")
+os.environ.setdefault("DISABLE_CATALOG_SANITY_WORKER", "1")
 os.environ.setdefault("SQLALCHEMY_POOL_NULL", "1")
 if url := os.environ.get("TEST_DATABASE_URL"):
     os.environ["DATABASE_URL"] = url

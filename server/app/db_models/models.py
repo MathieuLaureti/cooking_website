@@ -202,3 +202,21 @@ class RecipeUrlImport(Base):
     ai_next_attempt_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+
+
+class CatalogSanityRun(Base):
+    __tablename__ = "catalog_sanity_run"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="queued")
+    use_laya: Mapped[bool] = mapped_column(nullable=False, server_default="false")
+    total_foods: Mapped[Optional[int]] = mapped_column(nullable=True)
+    pipeline_layer: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    layer_current: Mapped[Optional[int]] = mapped_column(nullable=True)
+    layer_total: Mapped[Optional[int]] = mapped_column(nullable=True)
+    drops_count: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    result_drops: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
+    error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
