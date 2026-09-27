@@ -161,6 +161,17 @@ docker compose exec server python scripts/ollama_run.py "beurre salé"
 
 See [Ingredient identity](decisions/2026-09-25-ingredient-identity.md#prototype).
 
+## Cooking-catalog sanity preview
+
+`server/scripts/catalog_sanity_preview.py` runs the layered **preview** pipeline in `server/app/catalog_sanity.py` over every CNF row. It prints a tab-separated list of foods that would be hidden from a home-recipe catalog (layer 1–2 rules by default). Pass `--laya` to add layer 3 (same Laya `/api/decide` service as ingredient match) on survivors — slow, one HTTP call per remaining row. Nothing is written to Postgres.
+
+```bash
+docker compose exec server python scripts/catalog_sanity_preview.py
+docker compose exec server python scripts/catalog_sanity_preview.py --laya
+```
+
+Columns: `id`, `layer`, `reason`, `name_en`, `name_fr`, `group_en`. A summary line on stderr reports totals.
+
 ## Recipe URL queue
 
 The server process starts one loop (`server/app/recipe_import_worker.py`) that claims `recipe_url_import` rows one at a time. It does not need a separate container. A restart sets leftover `running` rows back to `queued`.
