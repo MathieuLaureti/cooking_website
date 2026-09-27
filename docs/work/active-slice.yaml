@@ -1,20 +1,19 @@
-# Active agent-managed slice — feature #21
+# Active agent-managed slice — fix #27
 version: 1
 repo: MathieuLaureti/cooking_website
-input_doc: docs/input/2026-09-26-extension-import-progress.md
+input_doc: docs/input/2026-09-27-grok-oauth-iss.md
 delivery_mode: single
 issues:
-  - number: 21
-    url: https://github.com/MathieuLaureti/cooking_website/issues/21
+  - number: 27
+    url: https://github.com/MathieuLaureti/cooking_website/issues/27
     role: primary
-branch: feature/21-extension-import-progress
+branch: fix/27-grok-oauth-iss
 pr:
-  number: 22
-  url: https://github.com/MathieuLaureti/cooking_website/pull/22
-  state: open
-delivery_report: docs/delivery/21-extension-import-progress.md
+  number: null
+  url: ""
+delivery_report: docs/delivery/27-grok-oauth-iss.md
 labels:
   managed: agent-managed
-phase: pr_open
-updated_at: "2026-09-27T00:55:00Z"
-updated_by: planner
+phase: implementing
+updated_at: "2026-09-27T00:35:00Z"
+updated_by: coder

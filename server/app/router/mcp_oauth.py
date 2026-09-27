@@ -128,6 +128,7 @@ def _authorization_server_metadata() -> dict[str, Any]:
             "client_secret_basic",
             "none",
         ],
+        "authorization_response_iss_parameter_supported": True,
     }
 
 
@@ -215,6 +216,7 @@ async def oauth_authorize_get(
     scope: Annotated[str | None, Query()] = None,
     code_challenge: Annotated[str | None, Query()] = None,
     code_challenge_method: Annotated[str | None, Query()] = None,
+    resource: Annotated[str | None, Query()] = None,
     db: AsyncSession = Depends(get_db),
 ) -> HTMLResponse:
     if response_type != "code":
@@ -235,6 +237,7 @@ async def oauth_authorize_get(
         "scope": normalize_oauth_scope(scope),
         "code_challenge": code_challenge,
         "code_challenge_method": code_challenge_method,
+        "resource": resource or "",
     }
     return HTMLResponse(_authorize_login_html(error=None, oauth_fields=oauth_fields))
 
@@ -250,6 +253,7 @@ async def oauth_authorize_post(
     scope: Annotated[str, Form()] = "mcp offline_access",
     code_challenge: Annotated[str, Form()] = "",
     code_challenge_method: Annotated[str, Form()] = "S256",
+    resource: Annotated[str, Form()] = "",
     db: AsyncSession = Depends(get_db),
 ) -> HTMLResponse | RedirectResponse:
     oauth_fields = {
@@ -260,6 +264,7 @@ async def oauth_authorize_post(
         "scope": scope,
         "code_challenge": code_challenge,
         "code_challenge_method": code_challenge_method,
+        "resource": resource,
     }
     if response_type != "code":
         return HTMLResponse(
@@ -288,6 +293,7 @@ async def oauth_authorize_post(
             )
         )
 
+    resource_value = resource.strip() or None
     code = await store_auth_code(
         AuthCodeRecord(
             client_id=client_id,
@@ -295,9 +301,10 @@ async def oauth_authorize_post(
             redirect_uri=redirect_uri,
             code_challenge=code_challenge,
             scope=normalize_oauth_scope(scope),
+            resource=resource_value,
         )
     )
-    params: dict[str, str] = {"code": code}
+    params: dict[str, str] = {"code": code, "iss": oauth_issuer()}
     if state:
         params["state"] = state
     location = f"{redirect_uri}?{urlencode(params)}"
@@ -341,6 +348,14 @@ async def oauth_token(
         if record.redirect_uri != redirect_uri:
             raise HTTPException(400, "invalid_grant")
         if not _verify_pkce(str(code_verifier), record.code_challenge):
+            raise HTTPException(400, "invalid_grant")
+
+        token_resource = form.get("resource")
+        expected_resource = mcp_resource_url()
+        if token_resource is not None and str(token_resource).strip():
+            if str(token_resource).strip() != expected_resource:
+                raise HTTPException(400, "invalid_grant")
+        elif record.resource and record.resource != expected_resource:
             raise HTTPException(400, "invalid_grant")
 
         result = await db.execute(select(User).where(User.id == record.user_id))

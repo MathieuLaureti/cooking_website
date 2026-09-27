@@ -12,6 +12,7 @@ async def test_oauth_authorization_server_metadata(client: AsyncClient) -> None:
     assert "authorization_endpoint" in body
     assert "token_endpoint" in body
     assert "issuer" in body
+    assert body.get("authorization_response_iss_parameter_supported") is True
 
 
 @pytest.mark.asyncio
