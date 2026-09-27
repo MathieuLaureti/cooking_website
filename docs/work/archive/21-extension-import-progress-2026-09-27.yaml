@@ -1,4 +1,4 @@
-# Archived while MCP OAuth slice #23 started (PR #22 remains open)
+# Archived when slice #25 enrolled (PR #22 may still be open on GitHub)
 version: 1
 repo: MathieuLaureti/cooking_website
 input_doc: docs/input/2026-09-26-extension-import-progress.md
@@ -16,5 +16,5 @@ delivery_report: docs/delivery/21-extension-import-progress.md
 labels:
   managed: agent-managed
 phase: pr_open
-updated_at: "2026-09-27T00:50:00Z"
-updated_by: documenter
+updated_at: "2026-09-27T00:20:00Z"
+updated_by: github-project
