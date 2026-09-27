@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { API_PREFIX, apiClient } from '../api/client';
 import AdminPanel from './AdminPanel';
+import CatalogSanityPanel from './CatalogSanityPanel';
 
 interface Candidate {
   food_id: number;
@@ -369,6 +370,7 @@ const AdminHome: React.FC<{ onOpenFood: (foodId: number) => void }> = ({ onOpenF
         )}
       </div>
       <UrlImportQueue />
+      <CatalogSanityPanel />
     </div>
   );
 };

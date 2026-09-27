@@ -28,17 +28,20 @@ flowchart TD
 5. The number button accepts that food. The API writes `catalog_alias` for the typed string and marks the row resolved. The next pending name replaces it.
 6. The food name opens that food in the nutrition checker (amounts per 100 g) and returns to the user screen.
 7. **URL imports** sits under the alias queue and refreshes every few seconds. In-progress rows show **N/3** step labels (Reaching browser, Retrieving data, Extraction via AI). Rows in **`ai_wait`** stay on **3/3** with the next retry time. The header counts queued, running, and ai_wait rows. Below that, the oldest **ready** recipe has **Keep** and **Discard**; **failed** (or stuck **ai_wait**) offers **Retry** and **Discard**.
+8. **CNF catalog sanity** sits under URL imports. **Rules only** finishes in seconds; **With Laya (overnight)** runs layer 3 on survivors and can take hours. While `queued` or `running`, the panel shows progress like **`Layer 3 - 653/5680`** and a live drop count. When `completed`, the full drop list is on the run (`GET /api/catalog_sanity/runs/{id}`); nothing is removed from the live nutrition catalog automatically.
 
 ## UI
 
 - `console/src/App.tsx` — `surface` is `user` or `admin`
 - `console/src/components/AdminHome.tsx` — alias queue and URL import review
+- `console/src/components/CatalogSanityPanel.tsx` — CNF sanity preview runs
 - `console/src/components/AdminPanel.tsx` — registration code (`embedded` on this screen)
 - `console/src/components/MatchChecker.tsx` — `focusFoodId` loads one nutrition food
 
 ## Backend
 
 - `POST /api/alias_reviews/match`, `GET /api/alias_reviews`, and `POST /api/alias_reviews/{id}/accept` in `server/app/router/alias_review.py` (`require_admin`)
+- `POST /api/catalog_sanity/runs`, `GET /api/catalog_sanity/runs`, and `GET /api/catalog_sanity/runs/{id}` in `server/app/router/catalog_sanity.py` (`require_admin`)
 - `server/app/alias_link.py` — insert alias if `normalized` is new; accept only a `food_id` that is in `candidates`
 - Table `catalog_alias_review` in [data model](../data-model.md)
 
