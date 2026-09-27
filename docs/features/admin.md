@@ -27,7 +27,7 @@ flowchart TD
 4. A name field above the alias queue runs the same matcher as `server/scripts/ollama_run.py`. A recognized name shows the catalog food (click it to open nutrition). An unsure name is written to the waiting list and that row is shown immediately. The list also reloads every few seconds.
 5. The number button accepts that food. The API writes `catalog_alias` for the typed string and marks the row resolved. The next pending name replaces it.
 6. The food name opens that food in the nutrition checker (amounts per 100 g) and returns to the user screen.
-7. **URL imports** sits under the alias queue and refreshes every few seconds. It shows how many URLs are still extracting, then the oldest ready recipe with **Keep** and **Discard**. Keep writes the dish and recipe and shows the next one. A failed row shows the error with **Retry** (re-queues extraction) and **Discard**.
+7. **URL imports** sits under the alias queue and refreshes every few seconds. While imports are `queued` or `running`, an **in progress** block lists the URL being extracted (pulsing indicator) and any URLs waiting in queue. The header shows **N in progress** or **idle**. Below that, the oldest **ready** recipe has **Keep** and **Discard**; a **failed** row shows **Retry** and **Discard**.
 
 ## UI
 
