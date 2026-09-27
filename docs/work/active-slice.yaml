@@ -1,20 +1,27 @@
-# Active agent-managed slice — feature #21 (PR #22 still open)
+# Active agent-managed slice — fix #25 (Grok MCP OAuth discovery)
 version: 1
 repo: MathieuLaureti/cooking_website
-input_doc: docs/input/2026-09-26-extension-import-progress.md
+input_doc: docs/input/2026-09-26-grok-mcp-oauth-discovery.md
 delivery_mode: single
 issues:
-  - number: 21
-    url: https://github.com/MathieuLaureti/cooking_website/issues/21
+  - number: 25
+    url: https://github.com/MathieuLaureti/cooking_website/issues/25
     role: primary
-branch: feature/21-extension-import-progress
+branch: fix/25-grok-mcp-oauth-discovery
 pr:
-  number: 22
-  url: https://github.com/MathieuLaureti/cooking_website/pull/22
-  state: open
-delivery_report: docs/delivery/21-extension-import-progress.md
+  number: null
+  url: ""
+  state: ""
+delivery_report: ""
 labels:
   managed: agent-managed
-phase: pr_open
-updated_at: "2026-09-27T00:15:00Z"
-updated_by: github-ship-sync
+phase: implementing
+gates:
+  gate_1:
+    approved_at: "2026-09-27T00:20:00Z"
+    user_quote: "yes"
+  gate_2:
+    approved_at: "2026-09-27T00:25:00Z"
+    user_quote: "yes"
+updated_at: "2026-09-27T00:25:00Z"
+updated_by: planner

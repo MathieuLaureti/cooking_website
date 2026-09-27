@@ -118,7 +118,8 @@ OAuth discovery (RFC 9728 / 8414):
 | Document | Public URL |
 |----------|------------|
 | Protected resource metadata | `https://www.homelabdu204.ca/recipes/.well-known/oauth-protected-resource` |
-| Authorization server metadata | `https://www.homelabdu204.ca/recipes/.well-known/oauth-authorization-server` (same JSON at `…/openid-configuration`) |
+| Authorization server metadata | `https://www.homelabdu204.ca/recipes/.well-known/oauth-authorization-server` |
+| Grok path-segment AS metadata (edge) | `https://www.homelabdu204.ca/.well-known/oauth-authorization-server/recipes` (homelab edge proxy; see [operations.md](../operations.md#edge-nginx-homelab)) |
 
 The protected-resource JSON `resource` field is **`…/recipes/mcp`** (no trailing slash, RFC 9728). Streamable HTTP clients still connect at **`…/recipes/mcp/`** (trailing slash).
 

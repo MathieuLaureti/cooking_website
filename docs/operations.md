@@ -104,6 +104,26 @@ proxy_set_header Connection "";
 
 After changing edge config, reload nginx and start a **new Spark chat** (tool list is cached per session). See [features/mcp.md](features/mcp.md#spark-checklist-transport-schema-cache).
 
+**Grok Bot OAuth discovery** probes RFC 8414 path-segment metadata at the **domain root** before `/recipes/…`. Without this, clients may fall back to `/recipes/.well-known/openid-configuration` and fail OpenID Connect validation. On the TLS host, proxy the path-segment URL to the cooking stack (same JSON as `GET /recipes/.well-known/oauth-authorization-server`):
+
+```nginx
+location = /.well-known/oauth-authorization-server/recipes {
+    proxy_pass http://192.168.2.99:80/.well-known/oauth-authorization-server;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+```
+
+Replace `192.168.2.99` with the cooking host if different. Reload edge nginx, then verify:
+
+```bash
+curl -sS -o /dev/null -w "%{http_code}\n" \
+  https://www.homelabdu204.ca/.well-known/oauth-authorization-server/recipes
+```
+
+Expect **200**. The app does **not** serve `/.well-known/openid-configuration` (avoids invalid OIDC stubs); use `oauth-authorization-server` only.
+
 `DATABASE_URL` is optional in `server/app/database.py`; if unset, the URL is built from the `DB_*` vars. Driver is `postgresql+asyncpg`. Redis URL is hardcoded `redis://cache:6379/0`.
 
 ## Schema and seed
