@@ -1,0 +1,19 @@
+version: 1
+repo: MathieuLaureti/cooking_website
+input_doc: docs/input/2026-09-26-mcp-oauth-resource-url.md
+delivery_mode: single
+issues:
+  - number: 23
+    url: https://github.com/MathieuLaureti/cooking_website/issues/23
+    role: primary
+branch: fix/23-mcp-oauth-resource-url
+pr:
+  number: 24
+  url: https://github.com/MathieuLaureti/cooking_website/pull/24
+  state: merged
+delivery_report: docs/delivery/23-mcp-oauth-resource-url.md
+labels:
+  managed: agent-managed
+phase: merged
+updated_at: "2026-09-27T00:15:00Z"
+updated_by: github-ship-sync

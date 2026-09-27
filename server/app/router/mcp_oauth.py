@@ -136,12 +136,6 @@ async def oauth_authorization_server_metadata() -> dict[str, Any]:
     return _authorization_server_metadata()
 
 
-@router.get("/.well-known/openid-configuration")
-async def openid_configuration_metadata() -> dict[str, Any]:
-    # Gemini / OIDC clients probe this after oauth-protected-resource (RFC 8414 §3).
-    return _authorization_server_metadata()
-
-
 @router.post("/oauth/register")
 async def dynamic_client_registration(
     body: dict[str, Any],

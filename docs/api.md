@@ -284,7 +284,7 @@ Streamable HTTP MCP at **`/mcp/`** on the cooking host. Public prod URL: **`http
 
 **Auth (either):**
 
-- **OAuth 2.0** (Grok Bot / Gemini Spark): discovery at `GET /recipes/.well-known/oauth-protected-resource` and `…/oauth-authorization-server`; authorize `GET/POST /recipes/oauth/authorize`; token `POST /recipes/oauth/token` (accepts `client_secret_post`, `client_secret_basic`, or public client + PKCE as sent by OpenAuth); DCR `POST /recipes/oauth/register` (defaults to `token_endpoint_auth_method: none`; redirect URIs must match Gemini or Cursor/Grok Bot callbacks, or `MCP_OAUTH_EXTRA_REDIRECT_URIS`). MCP Bearer access token (`aud=mcp`, admin user).
+- **OAuth 2.0** (Grok Bot / Gemini Spark): discovery at `GET /recipes/.well-known/oauth-protected-resource` (JSON `resource` = `…/mcp` without trailing slash) and `GET /recipes/.well-known/oauth-authorization-server` (no `openid-configuration` stub). Grok also expects homelab edge `GET /.well-known/oauth-authorization-server/recipes` (see [operations.md](operations.md#edge-nginx-homelab)). Authorize `GET/POST /recipes/oauth/authorize`; token `POST /recipes/oauth/token` (accepts `client_secret_post`, `client_secret_basic`, or public client + PKCE as sent by OpenAuth); DCR `POST /recipes/oauth/register` (defaults to `token_endpoint_auth_method: none`; redirect URIs must match Gemini or Cursor/Grok Bot callbacks, or `MCP_OAUTH_EXTRA_REDIRECT_URIS`). MCP Bearer access token (`aud=mcp`, admin user).
 - **API key:** `MCP_API_KEY` via `Authorization: Bearer …` or `X-MCP-API-Key` (CLI / Cursor `mcp.json` / Grok Bot header fallback).
 
 Unauthenticated MCP → **401** + `WWW-Authenticate` (OAuth metadata URL). No OAuth and no `MCP_API_KEY` → **503**.
