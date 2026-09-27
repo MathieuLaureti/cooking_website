@@ -1,0 +1,20 @@
+# Archived while MCP OAuth slice #23 started (PR #22 remains open)
+version: 1
+repo: MathieuLaureti/cooking_website
+input_doc: docs/input/2026-09-26-extension-import-progress.md
+delivery_mode: single
+issues:
+  - number: 21
+    url: https://github.com/MathieuLaureti/cooking_website/issues/21
+    role: primary
+branch: feature/21-extension-import-progress
+pr:
+  number: 22
+  url: https://github.com/MathieuLaureti/cooking_website/pull/22
+  state: open
+delivery_report: docs/delivery/21-extension-import-progress.md
+labels:
+  managed: agent-managed
+phase: pr_open
+updated_at: "2026-09-27T00:50:00Z"
+updated_by: documenter

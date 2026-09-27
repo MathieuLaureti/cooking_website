@@ -120,6 +120,8 @@ OAuth discovery (RFC 9728 / 8414):
 | Protected resource metadata | `https://www.homelabdu204.ca/recipes/.well-known/oauth-protected-resource` |
 | Authorization server metadata | `https://www.homelabdu204.ca/recipes/.well-known/oauth-authorization-server` (same JSON at `…/openid-configuration`) |
 
+The protected-resource JSON `resource` field is **`…/recipes/mcp`** (no trailing slash, RFC 9728). Streamable HTTP clients still connect at **`…/recipes/mcp/`** (trailing slash).
+
 Unauthenticated MCP requests return **401** with `WWW-Authenticate: Bearer resource_metadata="…"`.
 
 OAuth redirect URIs allowed at DCR (exact or prefix): Gemini Spark `https://oauth-redirect.googleusercontent.com/r/…`, Gemini Enterprise `https://vertexaisearch.cloud.google.com/oauth-redirect`, Cursor/Grok Bot callbacks above, plus `MCP_OAUTH_EXTRA_REDIRECT_URIS`. DCR does not accept arbitrary URIs just because they appear in the registration body.
