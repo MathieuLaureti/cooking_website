@@ -9,13 +9,13 @@ issues:
     role: primary
 branch: fix/25-grok-mcp-oauth-discovery
 pr:
-  number: null
-  url: ""
-  state: ""
-delivery_report: ""
+  number: 26
+  url: https://github.com/MathieuLaureti/cooking_website/pull/26
+  state: open
+delivery_report: docs/delivery/25-grok-mcp-oauth-discovery.md
 labels:
   managed: agent-managed
-phase: implementing
+phase: pr_open
 gates:
   gate_1:
     approved_at: "2026-09-27T00:20:00Z"
@@ -23,5 +23,5 @@ gates:
   gate_2:
     approved_at: "2026-09-27T00:25:00Z"
     user_quote: "yes"
-updated_at: "2026-09-27T00:25:00Z"
-updated_by: planner
+updated_at: "2026-09-27T00:30:00Z"
+updated_by: documenter
