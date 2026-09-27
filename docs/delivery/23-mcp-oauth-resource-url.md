@@ -1,7 +1,7 @@
 # Delivery: MCP OAuth protected-resource URL (no trailing slash)
 
 ## Status
-pr-open
+merged
 
 ## Links
 - Issue(s): #23 — https://github.com/MathieuLaureti/cooking_website/issues/23
@@ -34,10 +34,10 @@ OAuth protected-resource metadata now advertises the MCP resource identifier as 
 - `curl -H 'Cache-Control: no-cache' https://www.homelabdu204.ca/recipes/.well-known/oauth-protected-resource` → `resource` ends with `/mcp`, not `/mcp/`.
 
 ## Ship checklist
-- [ ] PR reviewed on GitHub
-- [ ] CI green (if applicable)
-- [ ] Merge approved by client
-- [ ] After merge: rebuild `cw_server_prod` from merged `master` (prod may already match pre-merge hotfix)
+- [x] PR reviewed on GitHub
+- [x] CI green (if applicable)
+- [x] Merge approved by client
+- [x] After merge: rebuild `cw_server_prod` from merged `master`
 
 ## GitHub artifacts
 ### PR title

@@ -1,27 +1,20 @@
-# Active agent-managed slice — bugfix #23
+# Active agent-managed slice — feature #21 (PR #22 still open)
 version: 1
 repo: MathieuLaureti/cooking_website
-input_doc: docs/input/2026-09-26-mcp-oauth-resource-url.md
+input_doc: docs/input/2026-09-26-extension-import-progress.md
 delivery_mode: single
 issues:
-  - number: 23
-    url: https://github.com/MathieuLaureti/cooking_website/issues/23
+  - number: 21
+    url: https://github.com/MathieuLaureti/cooking_website/issues/21
     role: primary
-branch: fix/23-mcp-oauth-resource-url
+branch: feature/21-extension-import-progress
 pr:
-  number: 24
-  url: https://github.com/MathieuLaureti/cooking_website/pull/24
+  number: 22
+  url: https://github.com/MathieuLaureti/cooking_website/pull/22
   state: open
-delivery_report: docs/delivery/23-mcp-oauth-resource-url.md
+delivery_report: docs/delivery/21-extension-import-progress.md
 labels:
   managed: agent-managed
-gates:
-  gate_1:
-    approved_at: "2026-09-27T00:02:00Z"
-    user_quote: "perfect now resume and do missing pipeline action and proceed"
-  gate_2:
-    approved_at: "2026-09-27T00:02:00Z"
-    user_quote: "perfect now resume and do missing pipeline action and proceed"
 phase: pr_open
-updated_at: "2026-09-27T00:10:00Z"
-updated_by: documenter
+updated_at: "2026-09-27T00:15:00Z"
+updated_by: github-ship-sync
