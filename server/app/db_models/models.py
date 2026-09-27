@@ -195,3 +195,10 @@ class RecipeUrlImport(Base):
         ForeignKey("recipe.id", ondelete="SET NULL"), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    page_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    structured_ingredients: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
+    pipeline_step: Mapped[Optional[int]] = mapped_column(nullable=True)
+    ai_attempt_count: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    ai_next_attempt_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )

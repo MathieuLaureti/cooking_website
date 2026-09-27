@@ -62,6 +62,7 @@ From `.env.example` (do not commit real `.env` values):
 | `DB_PORT` | default `5432` |
 | `GEMINI_API_KEY` | server-side key for recipe URL and image import |
 | `GEMINI_MODEL` | Gemini model id; default `gemma-4-31b-it` |
+| `RECIPE_IMPORT_MAX_ACTIVE` | max extension queue rows in `queued`, `running`, `ai_wait`, or `ready`; default `25` |
 | `JWT_SECRET` | JWT signing + registration code HMAC (required in prod) |
 | `JWT_EXPIRE_MINUTES` | Token TTL; default `10080` (7 days) |
 | `ADMIN_USERNAME` | Bootstrap first admin when `user` table is empty |

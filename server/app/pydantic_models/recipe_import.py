@@ -16,3 +16,6 @@ class RecipeImportItem(BaseModel):
     extract: RecipeExtract | None = None
     error: str | None = None
     created_at: datetime
+    pipeline_step: int | None = None
+    pipeline_label: str | None = None
+    ai_next_attempt_at: datetime | None = None

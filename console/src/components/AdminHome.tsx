@@ -40,6 +40,27 @@ interface UrlImport {
   status: string;
   extract: ImportExtract | null;
   error: string | null;
+  pipeline_step: number | null;
+  pipeline_label: string | null;
+  ai_next_attempt_at: string | null;
+}
+
+function stepLine(row: UrlImport): string | null {
+  if (row.pipeline_step == null || row.pipeline_label == null) {
+    return null;
+  }
+  return `${row.pipeline_step}/3 ${row.pipeline_label}`;
+}
+
+function formatRetryAt(iso: string | null): string | null {
+  if (!iso) {
+    return null;
+  }
+  const when = new Date(iso);
+  if (Number.isNaN(when.getTime())) {
+    return null;
+  }
+  return when.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
 const UrlImportQueue: React.FC = () => {
@@ -75,8 +96,11 @@ const UrlImportQueue: React.FC = () => {
       .catch(() => setError('Could not retry that import'));
   };
 
-  const activeRows = rows.filter(row => row.status === 'queued' || row.status === 'running');
+  const activeRows = rows.filter(row =>
+    row.status === 'queued' || row.status === 'running' || row.status === 'ai_wait'
+  );
   const running = activeRows.find(row => row.status === 'running');
+  const waitingAi = activeRows.filter(row => row.status === 'ai_wait');
   const queuedRows = activeRows.filter(row => row.status === 'queued');
   const card = rows.find(row => row.status === 'ready') ?? rows.find(row => row.status === 'failed');
   const recipe = card?.extract;
@@ -100,16 +124,36 @@ const UrlImportQueue: React.FC = () => {
             <div className="mb-2">
               <p className="text-[10px] uppercase tracking-widest text-[#FFA500] font-bold flex items-center gap-2 mb-1">
                 <span className="inline-block w-2 h-2 rounded-full bg-[#FFA500] animate-pulse shrink-0" aria-hidden />
-                Extracting recipe
+                {stepLine(running) ?? 'Extracting recipe'}
               </p>
               <a href={running.url} className="text-xs text-slate-300 break-all" target="_blank" rel="noreferrer">
                 {running.url}
               </a>
             </div>
           )}
+          {waitingAi.map(row => (
+            <div key={row.id} className={(running ? 'mt-2 pt-2 border-t border-white/5' : 'mb-2')}>
+              <p className="text-[10px] uppercase tracking-widest text-[#FFA500] font-bold mb-1">
+                {stepLine(row) ?? '3/3 Extraction via AI'}
+              </p>
+              {row.error && (
+                <p className="text-xs text-slate-400 mb-1">Model busy — {row.error.slice(0, 120)}</p>
+              )}
+              {formatRetryAt(row.ai_next_attempt_at) && (
+                <p className="text-xs text-slate-500 mb-1">
+                  Retry around {formatRetryAt(row.ai_next_attempt_at)}
+                </p>
+              )}
+              <a href={row.url} className="text-xs text-slate-400 break-all" target="_blank" rel="noreferrer">
+                {row.url}
+              </a>
+            </div>
+          ))}
           {queuedRows.map(row => (
-            <div key={row.id} className={running ? 'mt-2 pt-2 border-t border-white/5' : ''}>
-              <p className="text-[10px] uppercase tracking-widest text-[#5E7161] mb-1">Waiting in queue</p>
+            <div key={row.id} className={running || waitingAi.length ? 'mt-2 pt-2 border-t border-white/5' : ''}>
+              <p className="text-[10px] uppercase tracking-widest text-[#5E7161] mb-1">
+                {stepLine(row) ?? 'Waiting in queue'}
+              </p>
               <a href={row.url} className="text-xs text-slate-400 break-all" target="_blank" rel="noreferrer">
                 {row.url}
               </a>

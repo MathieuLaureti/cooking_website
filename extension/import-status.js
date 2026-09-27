@@ -14,7 +14,9 @@ function normalizeImportUrl(raw) {
 }
 
 function activeImportCount(rows) {
-  return rows.filter((row) => row.status === 'queued' || row.status === 'running').length;
+  return rows.filter(
+    (row) => row.status === 'queued' || row.status === 'running' || row.status === 'ai_wait'
+  ).length;
 }
 
 function findImportForUrl(rows, pageUrl) {
@@ -31,6 +33,8 @@ function importStatusMessage(row) {
       return 'Waiting in queue…';
     case 'running':
       return 'Extracting recipe…';
+    case 'ai_wait':
+      return 'Waiting for AI (model busy)…';
     case 'ready':
       return 'Ready — review in admin';
     case 'failed':
