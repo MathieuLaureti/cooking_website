@@ -1,26 +1,24 @@
-# Active agent-managed slice — fix #29
+# Active agent-managed slice — feature #31
 version: 1
 repo: MathieuLaureti/cooking_website
-input_doc: docs/input/2026-09-27-recipe-ingredient-extraction.md
+input_doc: docs/input/2026-09-27-url-import-pipeline-resilience.md
 delivery_mode: single
 issues:
-  - number: 29
-    url: https://github.com/MathieuLaureti/cooking_website/issues/29
+  - number: 31
+    url: https://github.com/MathieuLaureti/cooking_website/issues/31
     role: primary
-branch: fix/29-recipe-ingredient-extraction
+branch: feature/31-url-import-pipeline-resilience
 pr:
-  number: 30
-  url: https://github.com/MathieuLaureti/cooking_website/pull/30
-delivery_report: docs/delivery/29-recipe-ingredient-extraction.md
+  number: null
+  url: ""
+delivery_report: docs/delivery/31-url-import-pipeline-resilience.md
 labels:
   managed: agent-managed
-phase: pr_open
+phase: awaiting_batch_approval
 gates:
   gate_1:
-    approved_at: "2026-09-27T19:30:00Z"
-    user_quote: go
-  gate_2:
-    approved_at: "2026-09-27T19:30:00Z"
-    user_quote: go
-updated_at: "2026-09-27T19:30:00Z"
+    approved_at: "2026-09-27T19:35:00Z"
+    user_quote: "/automatic for the brainstormed features"
+  gate_2: {}
+updated_at: "2026-09-27T19:35:00Z"
 updated_by: orchestrator
