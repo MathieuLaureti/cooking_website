@@ -44,8 +44,8 @@ async def test_fetch_text_retries_reader_then_succeeds(monkeypatch):
     calls = {"n": 0}
     good = "Homemade caramel\n" + ("granulated sugar and butter. " * 30)
 
-    async def fake_playwright(self, url: str) -> str:
-        return "Performing security verification"
+    async def fake_playwright(self, url: str) -> tuple[str, list[str]]:
+        return "Performing security verification", []
 
     async def fake_reader(url: str) -> str:
         calls["n"] += 1
@@ -64,5 +64,6 @@ async def test_fetch_text_retries_reader_then_succeeds(monkeypatch):
     monkeypatch.setattr("app.scripts.extract.asyncio.sleep", noop_sleep)
 
     text = await RecipeExtractor()._fetch_text("https://example.com/recipe")
-    assert text == good
+    assert text.text == good
+    assert text.structured_ingredients == []
     assert calls["n"] == 2
