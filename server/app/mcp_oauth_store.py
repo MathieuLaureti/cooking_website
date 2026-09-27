@@ -74,6 +74,7 @@ class AuthCodeRecord:
     redirect_uri: str
     code_challenge: str
     scope: str
+    resource: str | None = None
 
 
 async def store_auth_code(record: AuthCodeRecord) -> str:
@@ -84,6 +85,7 @@ async def store_auth_code(record: AuthCodeRecord) -> str:
         "redirect_uri": record.redirect_uri,
         "code_challenge": record.code_challenge,
         "scope": record.scope,
+        "resource": record.resource,
     }
     await cache.setex(f"oauth:code:{code}", AUTH_CODE_TTL, json.dumps(payload))
     return code
@@ -102,6 +104,7 @@ async def pop_auth_code(code: str) -> AuthCodeRecord | None:
         redirect_uri=data["redirect_uri"],
         code_challenge=data["code_challenge"],
         scope=data.get("scope", "mcp"),
+        resource=data.get("resource"),
     )
 
 

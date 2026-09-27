@@ -93,7 +93,7 @@ This is **Grok Bot**, not [grok.com custom connectors](https://docs.x.ai/grok/co
 |---------|----------------|
 | Model says tools are not in this session | Chat is **not Spark**, or Spark task without the custom app attached |
 | Same message in **Cursor IDE** | Cursor has no MCP server configured for this URL (use Grok Bot Plugins + OAuth, or `MCP_API_KEY` in `mcp.json`) |
-| Grok Bot plugin will not authenticate | OAuth DCR rejected a redirect URI, or login used a non-admin Cooking account. Check `docker compose logs server` for `redirect_uri not allowed` |
+| Grok Bot plugin will not authenticate | OAuth DCR rejected a redirect URI, non-admin login, or Cursor rejected the authorize redirect (missing `iss`). Tail **prod**: `docker compose -f docker-compose.prod.yml logs -f server`. After **Allow access** you should see `POST /oauth/token` → 200; if you only see authorize `302` and no token line, redeploy the stack with current OAuth (RFC 9207 `iss`). Also grep `redirect_uri not allowed` |
 | Logs show `tools/list` but no `tools/call`, and Spark prints a JSON payload | Google listed the tool but Gemini rejected the schema. FastMCP already inlines nested models; the field Spark cannot register is `additionalProperties` (also `$ref` / `$defs` if they appear). Redeploy, start a **new** Spark chat, and ask it to call **ping** then **create_recipe**. |
 | Server logs `MCP JSON-RPC method=tools/call` | Tool reached the server; check response / admin auth |
 | Only `initialize` (small POST) and GET 200s | Spark opened a session and never listed or called tools. Grep `MCP JSON-RPC` in `docker compose logs server`. |
