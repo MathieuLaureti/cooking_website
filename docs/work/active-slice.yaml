@@ -1,19 +1,26 @@
-# Active agent-managed slice — fix #27
+# Active agent-managed slice — fix #29
 version: 1
 repo: MathieuLaureti/cooking_website
-input_doc: docs/input/2026-09-27-grok-oauth-iss.md
+input_doc: docs/input/2026-09-27-recipe-ingredient-extraction.md
 delivery_mode: single
 issues:
-  - number: 27
-    url: https://github.com/MathieuLaureti/cooking_website/issues/27
+  - number: 29
+    url: https://github.com/MathieuLaureti/cooking_website/issues/29
     role: primary
-branch: fix/27-grok-oauth-iss
+branch: fix/29-recipe-ingredient-extraction
 pr:
   number: null
   url: ""
-delivery_report: docs/delivery/27-grok-oauth-iss.md
+delivery_report: docs/delivery/29-recipe-ingredient-extraction.md
 labels:
   managed: agent-managed
 phase: implementing
-updated_at: "2026-09-27T00:35:00Z"
-updated_by: coder
+gates:
+  gate_1:
+    approved_at: "2026-09-27T19:30:00Z"
+    user_quote: go
+  gate_2:
+    approved_at: "2026-09-27T19:30:00Z"
+    user_quote: go
+updated_at: "2026-09-27T19:30:00Z"
+updated_by: orchestrator

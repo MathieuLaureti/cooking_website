@@ -3,6 +3,7 @@ import base64
 import json
 import os
 import re
+from typing import NamedTuple
 
 import httpx
 from playwright.async_api import async_playwright
@@ -22,6 +23,90 @@ _BOT_WALL_PHRASES = (
     "enable javascript and cookies",
 )
 _url_lock = asyncio.Lock()
+
+
+class PageFetchResult(NamedTuple):
+    text: str
+    structured_ingredients: list[str]
+
+
+_LD_JSON_SCRIPT = re.compile(
+    r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',
+    re.DOTALL | re.IGNORECASE,
+)
+
+
+def _recipe_nodes_from_ld(data: object) -> list[dict]:
+    if isinstance(data, list):
+        nodes: list[dict] = []
+        for item in data:
+            nodes.extend(_recipe_nodes_from_ld(item))
+        return nodes
+    if not isinstance(data, dict):
+        return []
+    graph = data.get("@graph")
+    if graph is not None:
+        return _recipe_nodes_from_ld(graph)
+    node_type = data.get("@type")
+    types = node_type if isinstance(node_type, list) else [node_type]
+    if any(t and "Recipe" in str(t) for t in types):
+        return [data]
+    main = data.get("mainEntity")
+    if main is not None:
+        return _recipe_nodes_from_ld(main)
+    return []
+
+
+def _ingredient_strings_from_recipe(recipe: dict) -> list[str]:
+    raw = recipe.get("recipeIngredient")
+    if raw is None:
+        raw = recipe.get("ingredients")
+    if raw is None:
+        return []
+    if isinstance(raw, str):
+        return [raw.strip()] if raw.strip() else []
+    if not isinstance(raw, list):
+        return []
+    lines: list[str] = []
+    for item in raw:
+        if isinstance(item, str) and item.strip():
+            lines.append(item.strip())
+        elif isinstance(item, dict):
+            name = item.get("name") or item.get("text")
+            if name:
+                lines.append(str(name).strip())
+    return lines
+
+
+def parse_recipe_jsonld_ingredients(html: str) -> list[str]:
+    """Best-effort Schema.org Recipe ingredients from embedded JSON-LD."""
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for match in _LD_JSON_SCRIPT.finditer(html):
+        block = match.group(1).strip()
+        if not block:
+            continue
+        try:
+            data = json.loads(block)
+        except json.JSONDecodeError:
+            continue
+        for recipe in _recipe_nodes_from_ld(data):
+            for line in _ingredient_strings_from_recipe(recipe):
+                key = line.lower()
+                if key in seen:
+                    continue
+                seen.add(key)
+                ordered.append(line)
+    return ordered
+
+
+def _structured_ingredients_text(lines: list[str]) -> str:
+    body = "\n".join(f"- {line}" for line in lines)
+    return (
+        "Structured recipe metadata from the page (Schema.org recipeIngredient). "
+        "Every line below must appear in components[].ingredients with quantity and unit split when possible:\n"
+        f"{body}\n\n"
+    )
 
 
 def _looks_like_bot_wall(text: str) -> bool:
@@ -81,6 +166,8 @@ async def _fetch_reader_fallback_with_retries(url: str) -> str:
 
 _SYSTEM = (
     "Professional chef. Call emit_recipe once with the recipe from the source. "
+    "Include every ingredient from the page Ingredients section and from any structured ingredient list in the user message; "
+    "do not stop after the first ingredient or move ingredient lines into instructions only. "
     "Quantities are strings so fractions stay exact ('1/4', '1/2'); whole numbers are digit strings. "
     "No accents in names (café -> cafe). "
     "A recipe may be ingredients with an empty instructions list."
@@ -232,11 +319,14 @@ class RecipeExtractor:
 
     async def from_url(self, url: str, dish_names: list[str] | None) -> RecipeExtract:
         async with _url_lock:
-            text = await self._fetch_text(url)
-            return await self._emit(
-                [{"text": f"Page text:\n{text[:PAGE_CHAR_CAP]}"}],
-                dish_names,
-            )
+            fetched = await self._fetch_text(url)
+            parts: list[dict] = [{"text": f"Page text:\n{fetched.text[:PAGE_CHAR_CAP]}"}]
+            if fetched.structured_ingredients:
+                parts.insert(
+                    0,
+                    {"text": _structured_ingredients_text(fetched.structured_ingredients)},
+                )
+            return await self._emit(parts, dish_names)
 
     async def from_image(
         self, image: bytes, mime: str, dish_names: list[str] | None
@@ -361,23 +451,25 @@ class RecipeExtractor:
                 continue
         return reply, validated
 
-    async def _fetch_text(self, url: str) -> str:
+    async def _fetch_text(self, url: str) -> PageFetchResult:
         playwright_error: str | None = None
+        structured: list[str] = []
         try:
-            extracted_text = await self._fetch_text_playwright(url)
+            extracted_text, structured = await self._fetch_text_playwright(url)
             if _page_text_usable(extracted_text):
-                return extracted_text
+                return PageFetchResult(extracted_text, structured)
             playwright_error = "Extracted text too short."
         except Exception as e:
             playwright_error = str(e)
 
         try:
-            return await _fetch_reader_fallback_with_retries(url)
+            text = await _fetch_reader_fallback_with_retries(url)
+            return PageFetchResult(text, [])
         except Exception as reader_error:
             detail = _format_fetch_errors(playwright_error, str(reader_error))
             raise ValueError(f"Web extraction failed: {detail}") from reader_error
 
-    async def _fetch_text_playwright(self, url: str) -> str:
+    async def _fetch_text_playwright(self, url: str) -> tuple[str, list[str]]:
         async with async_playwright() as p:
             browser = await p.chromium.launch(
                 args=[
@@ -413,13 +505,16 @@ class RecipeExtractor:
                     )
                 except Exception:
                     pass
+                html = await page.content()
+                structured = parse_recipe_jsonld_ingredients(html)
                 await page.evaluate(
                     """() => {
                     const tags = ["script", "style", "header", "footer", "nav", "aside"];
                     tags.forEach(t => document.querySelectorAll(t).forEach(el => el.remove()));
                 }"""
                 )
-                return await page.inner_text("body")
+                body_text = await page.inner_text("body")
+                return body_text, structured
             finally:
                 await browser.close()
 
