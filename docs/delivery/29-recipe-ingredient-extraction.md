@@ -1,7 +1,7 @@
 # Delivery: Recipe ingredient extraction (prompt + JSON-LD)
 
 ## Status
-open
+merged
 
 ## Issue
 - https://github.com/MathieuLaureti/cooking_website/issues/29

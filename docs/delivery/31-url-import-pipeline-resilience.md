@@ -1,7 +1,7 @@
 # Delivery: URL import pipeline resilience (#31)
 
 ## Status
-open
+merged
 
 ## Issue
 - https://github.com/MathieuLaureti/cooking_website/issues/31

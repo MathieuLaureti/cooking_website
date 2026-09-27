@@ -1,26 +1,15 @@
-# Active agent-managed slice — feature #31
+# No active agent-managed slice — copy from active-slice.template.yaml to start one.
 version: 1
 repo: MathieuLaureti/cooking_website
-input_doc: docs/input/2026-09-27-url-import-pipeline-resilience.md
-delivery_mode: single
-issues:
-  - number: 31
-    url: https://github.com/MathieuLaureti/cooking_website/issues/31
-    role: primary
-branch: feature/31-url-import-pipeline-resilience
+input_doc: ""
+issues: []
+branch: ""
 pr:
-  number: 32
-  url: https://github.com/MathieuLaureti/cooking_website/pull/32
-delivery_report: docs/delivery/31-url-import-pipeline-resilience.md
+  number: null
+  url: ""
+delivery_report: ""
 labels:
   managed: agent-managed
-phase: pr_open
-gates:
-  gate_1:
-    approved_at: "2026-09-27T19:35:00Z"
-    user_quote: "/automatic for the brainstormed features"
-  gate_2:
-    approved_at: "2026-09-27T19:40:00Z"
-    user_quote: go
-updated_at: "2026-09-27T19:45:00Z"
+phase: idle
+updated_at: "2026-09-27T19:35:00Z"
 updated_by: orchestrator

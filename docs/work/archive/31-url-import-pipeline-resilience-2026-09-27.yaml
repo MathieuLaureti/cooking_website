@@ -1,0 +1,27 @@
+# Archived after merge PR #32
+version: 1
+repo: MathieuLaureti/cooking_website
+input_doc: docs/input/2026-09-27-url-import-pipeline-resilience.md
+delivery_mode: single
+issues:
+  - number: 31
+    url: https://github.com/MathieuLaureti/cooking_website/issues/31
+    role: primary
+branch: feature/31-url-import-pipeline-resilience
+pr:
+  number: 32
+  url: https://github.com/MathieuLaureti/cooking_website/pull/32
+  state: merged
+delivery_report: docs/delivery/31-url-import-pipeline-resilience.md
+labels:
+  managed: agent-managed
+phase: merged
+gates:
+  gate_1:
+    approved_at: "2026-09-27T19:35:00Z"
+    user_quote: "/automatic for the brainstormed features"
+  gate_2:
+    approved_at: "2026-09-27T19:40:00Z"
+    user_quote: go
+updated_at: "2026-09-27T19:35:00Z"
+updated_by: orchestrator
