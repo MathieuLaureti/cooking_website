@@ -8,6 +8,7 @@ import pytest
 from app.database import AsyncSessionLocal
 from app.db_models.models import RecipeUrlImport
 from app.pydantic_models.recipes import RecipeExtract
+from app.scripts.extract import PageFetchResult
 from app.recipe_import_worker import process_job
 
 
@@ -40,7 +41,11 @@ async def test_process_job_marks_ready() -> None:
     fake = RecipeExtract(name="Test", dish_name=f"Dish {tag}", components=[])
 
     with patch(
-        "app.recipe_import_worker.extractor.from_url",
+        "app.recipe_import_worker.extractor.fetch_page_for_import",
+        new_callable=AsyncMock,
+        return_value=PageFetchResult("Homemade caramel\n" + ("sugar " * 80), []),
+    ), patch(
+        "app.recipe_import_worker.extractor.extract_from_cached_page",
         new_callable=AsyncMock,
         return_value=fake,
     ):
@@ -59,7 +64,7 @@ async def test_process_job_marks_failed() -> None:
     job_id = await _insert_running_job(f"fail-{tag}")
 
     with patch(
-        "app.recipe_import_worker.extractor.from_url",
+        "app.recipe_import_worker.extractor.fetch_page_for_import",
         new_callable=AsyncMock,
         side_effect=RuntimeError("gemini down"),
     ):

@@ -10,10 +10,15 @@ from app.database import get_db
 from app.db_models.models import RecipeUrlImport
 from app.pydantic_models.recipe_import import RecipeImportCreate, RecipeImportItem
 from app.pydantic_models.recipes import RecipeExtract
+from app.recipe_import_limits import (
+    DUPLICATE_BLOCK_STATUSES,
+    max_active_imports,
+    pipeline_label,
+)
 from app.router.recipes import _import_extracted
 
 router = APIRouter(prefix="/recipe_imports", tags=["Recipe imports"])
-ACTIVE = ("queued", "running", "ready")
+ACTIVE = DUPLICATE_BLOCK_STATUSES
 
 
 def normalize_url(raw: str) -> str:
@@ -33,7 +38,20 @@ def _item(row: RecipeUrlImport) -> RecipeImportItem:
         extract=extract,
         error=row.error,
         created_at=row.created_at,
+        pipeline_step=row.pipeline_step,
+        pipeline_label=pipeline_label(row.pipeline_step),
+        ai_next_attempt_at=row.ai_next_attempt_at,
     )
+
+
+async def _active_import_count(db: AsyncSession) -> int:
+    from sqlalchemy import func
+
+    return await db.scalar(
+        select(func.count())
+        .select_from(RecipeUrlImport)
+        .where(RecipeUrlImport.status.in_(ACTIVE))
+    ) or 0
 
 
 async def _active(db: AsyncSession, normalized: str) -> RecipeUrlImport | None:
@@ -76,6 +94,11 @@ async def enqueue(
     existing = await _active(db, normalized)
     if existing is not None:
         return _item(existing)
+    if await _active_import_count(db) >= max_active_imports():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="URL import queue is full; discard or keep imports before adding more",
+        )
     row = RecipeUrlImport(url=raw, normalized_url=normalized, status="queued")
     db.add(row)
     try:
@@ -119,7 +142,7 @@ async def discard(
     row = await db.get(RecipeUrlImport, import_id)
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Import not found")
-    if row.status not in {"ready", "failed"}:
+    if row.status not in {"ready", "failed", "ai_wait"}:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Import cannot be discarded")
     row.status = "discarded"
     await db.commit()
@@ -147,6 +170,9 @@ async def retry(
     row.status = "queued"
     row.error = None
     row.extract = None
+    row.ai_next_attempt_at = None
+    row.ai_attempt_count = 0
+    row.pipeline_step = 3 if row.page_text else 1
     await db.commit()
     await db.refresh(row)
     return _item(row)

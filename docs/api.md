@@ -236,15 +236,17 @@ Full recipe object (`RecipeFull`):
 
 ## Recipe URL queue
 
-Code: `server/app/router/recipe_import.py`. Prefix `/recipe_imports`. **Auth: admin.** The server process runs one worker (`server/app/recipe_import_worker.py`) that scrapes the oldest `queued` row, then the next. `RecipeExtractor.from_url` holds one lock, so this worker and `GET /api/recipes/recipe_url` do not scrape at the same time. Nothing is written to `dish` or `recipe` until keep.
+Code: `server/app/router/recipe_import.py`. Prefix `/recipe_imports`. **Auth: admin.** The server process runs one worker (`server/app/recipe_import_worker.py`) that claims `queued` rows and due `ai_wait` rows. Playwright scrape uses a separate lock from Gemini (`app/gemini_scheduler.py`): interactive `GET /api/recipes/recipe_url` runs before background imports. Nothing is written to `dish` or `recipe` until keep.
+
+Import list items also include `pipeline_step`, `pipeline_label`, and `ai_next_attempt_at` while work is in progress.
 
 ### `POST /api/recipe_imports`
 
 - Purpose: enqueue a page. Returns as soon as the row exists.
 - Request body: `{ "url": string }` (`http` or `https`, max 2048 characters)
-- Response: `{ "id": int, "url": string, "status": string, "extract": RecipeExtract | null, "error": string | null, "created_at": string }`
-- A normalized URL that is already `queued`, `running`, or `ready` returns that row instead of a second job. Normalization drops the fragment and a trailing slash.
-- Errors: `400` invalid URL; `403` for a non-admin
+- Response: import item (see GET).
+- A normalized URL that is already `queued`, `running`, `ready`, or `ai_wait` returns that row instead of a second job. Normalization drops the fragment and a trailing slash.
+- Errors: `400` invalid URL; `409` when active import count reaches `RECIPE_IMPORT_MAX_ACTIVE` (default 25); `403` for a non-admin
 
 ### `GET /api/recipe_imports`
 
@@ -260,15 +262,15 @@ Code: `server/app/router/recipe_import.py`. Prefix `/recipe_imports`. **Auth: ad
 
 ### `POST /api/recipe_imports/{import_id}/discard`
 
-- Purpose: set `status` to `discarded` for a `ready` or `failed` row. Does not write a recipe.
+- Purpose: set `status` to `discarded` for a `ready`, `failed`, or `ai_wait` row. Does not write a recipe.
 - Response: the import item.
 - Errors: `404` missing row; `400` when the row is still `queued` or `running`; `403` for a non-admin
 
 ### `POST /api/recipe_imports/{import_id}/retry`
 
-- Purpose: re-queue a `failed` row (`status` → `queued`, clears `error` and `extract`) so the background worker runs extraction again.
+- Purpose: re-queue a `failed` or exhausted `ai_wait` row (`status` → `queued`, clears `error` and `extract`). When `page_text` is still stored, the worker skips scrape and retries AI only.
 - Response: the import item.
-- Errors: `404` missing row; `400` when the row is not `failed`, or when another row for the same normalized URL is already `queued`, `running`, or `ready`; `403` for a non-admin
+- Errors: `404` missing row; `400` when the row is not `failed`/`ai_wait`, or when another row for the same normalized URL is already active; `403` for a non-admin
 
 ### `POST /api/recipes/recipe_image?dish_id=`
 

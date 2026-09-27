@@ -9,6 +9,7 @@ import httpx
 from playwright.async_api import async_playwright
 
 from app.pydantic_models.recipes import RecipeChatRequest, RecipeExtract
+from app.gemini_scheduler import GeminiPriority, gemini_scheduler
 
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 PAGE_CHAR_CAP = 40_000
@@ -22,7 +23,7 @@ _BOT_WALL_PHRASES = (
     "just a moment",
     "enable javascript and cookies",
 )
-_url_lock = asyncio.Lock()
+_scrape_lock = asyncio.Lock()
 
 
 class PageFetchResult(NamedTuple):
@@ -317,16 +318,30 @@ class RecipeExtractor:
     def __init__(self):
         self.model = os.getenv("GEMINI_MODEL", "gemma-4-31b-it")
 
+    async def fetch_page_for_import(self, url: str) -> PageFetchResult:
+        async with _scrape_lock:
+            return await self._fetch_text(url)
+
+    async def extract_from_cached_page(
+        self,
+        fetched: PageFetchResult,
+        dish_names: list[str] | None,
+        *,
+        priority: GeminiPriority = GeminiPriority.INTERACTIVE,
+    ) -> RecipeExtract:
+        parts: list[dict] = [{"text": f"Page text:\n{fetched.text[:PAGE_CHAR_CAP]}"}]
+        if fetched.structured_ingredients:
+            parts.insert(
+                0,
+                {"text": _structured_ingredients_text(fetched.structured_ingredients)},
+            )
+        return await self._emit(parts, dish_names, priority=priority)
+
     async def from_url(self, url: str, dish_names: list[str] | None) -> RecipeExtract:
-        async with _url_lock:
-            fetched = await self._fetch_text(url)
-            parts: list[dict] = [{"text": f"Page text:\n{fetched.text[:PAGE_CHAR_CAP]}"}]
-            if fetched.structured_ingredients:
-                parts.insert(
-                    0,
-                    {"text": _structured_ingredients_text(fetched.structured_ingredients)},
-                )
-            return await self._emit(parts, dish_names)
+        fetched = await self.fetch_page_for_import(url)
+        return await self.extract_from_cached_page(
+            fetched, dish_names, priority=GeminiPriority.INTERACTIVE
+        )
 
     async def from_image(
         self, image: bytes, mime: str, dish_names: list[str] | None
@@ -338,9 +353,16 @@ class RecipeExtractor:
                 {"text": "Extract the recipe in this image."},
             ],
             dish_names,
+            priority=GeminiPriority.INTERACTIVE,
         )
 
-    async def _emit(self, parts: list[dict], dish_names: list[str] | None) -> RecipeExtract:
+    async def _emit(
+        self,
+        parts: list[dict],
+        dish_names: list[str] | None,
+        *,
+        priority: GeminiPriority = GeminiPriority.INTERACTIVE,
+    ) -> RecipeExtract:
         key = os.getenv("GEMINI_API_KEY")
         if not key:
             raise ValueError("GEMINI_API_KEY is not set")
@@ -379,19 +401,15 @@ class RecipeExtractor:
         }
 
         endpoint = GEMINI_URL.format(model=self.model)
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            response = await client.post(
-                endpoint,
-                headers={"x-goog-api-key": key},
-                json=payload,
-            )
-        if response.status_code >= 400:
-            raise ValueError(response.text[:800])
 
-        args = _stringify_quantities(_args_from_response(response.json()))
-        if dish_names is None:
-            args.pop("dish_name", None)
-        return RecipeExtract.model_validate(args)
+        async def call() -> RecipeExtract:
+            body = await _gemini_post(endpoint, key, payload)
+            args = _stringify_quantities(_args_from_response(body))
+            if dish_names is None:
+                args.pop("dish_name", None)
+            return RecipeExtract.model_validate(args)
+
+        return await gemini_scheduler.run(priority, call)
 
     async def chat(
         self, request: RecipeChatRequest, dish_context: str
@@ -438,9 +456,12 @@ class RecipeExtractor:
         }
 
         endpoint = GEMINI_URL.format(model=self.model)
-        body = await _gemini_post(endpoint, key, payload)
 
-        reply, recipes = _parse_chat_response(body)
+        async def call() -> tuple[str, list[RecipeExtract]]:
+            body = await _gemini_post(endpoint, key, payload)
+            return _parse_chat_response(body)
+
+        reply, recipes = await gemini_scheduler.run(GeminiPriority.INTERACTIVE, call)
         validated: list[RecipeExtract] = []
         for recipe in recipes:
             _stringify_quantities(recipe)

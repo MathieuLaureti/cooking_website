@@ -1,7 +1,7 @@
 # Scratch: URL import pipeline UI, AI scheduler, ingredient quality
 
 ## Status
-exploring (ingredient slice promoted separately)
+promoted — pipeline in docs/input/2026-09-27-url-import-pipeline-resilience.md (#31)
 
 ## Linked input
 docs/input/2026-09-27-recipe-ingredient-extraction.md — prompt + JSON-LD only; pipeline UI/scheduler still here

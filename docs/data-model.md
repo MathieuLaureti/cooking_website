@@ -196,14 +196,19 @@ erDiagram
 | `id` | integer | PK |
 | `url` | `varchar(2048)` | not null |
 | `normalized_url` | `varchar(2048)` | not null |
-| `status` | `varchar(16)` | not null, default `queued` (`queued`, `running`, `ready`, `failed`, `kept`, `discarded`) |
+| `status` | `varchar(16)` | not null, default `queued` (`queued`, `running`, `ai_wait`, `ready`, `failed`, `kept`, `discarded`) |
 | `extract` | `jsonb` | nullable. `RecipeExtract` (`name`, `dish_name`, `components`) once the scrape finishes |
 | `error` | text | nullable |
 | `recipe_id` | integer | nullable FK `recipe.id` `ON DELETE SET NULL` |
 | `created_at` | `timestamptz` | not null, default now |
+| `page_text` | text | nullable. Captured body text (max 40k chars) for AI-only retries |
+| `structured_ingredients` | `jsonb` | nullable. JSON-LD ingredient strings from Playwright |
+| `pipeline_step` | smallint | nullable. `1`–`3` while in progress |
+| `ai_attempt_count` | integer | not null, default `0`. Gemini backoff attempts |
+| `ai_next_attempt_at` | `timestamptz` | nullable. When to retry step 3 |
 
-- Unique `normalized_url` while `status` is `queued`, `running`, or `ready` (`uq_recipe_url_import_active`).
-- Notes: the batch worker writes `extract` here and does not insert `dish` or `recipe` until `POST /api/recipe_imports/{id}/keep`. Migration `c7e1b4a92d10`.
+- Unique `normalized_url` while `status` is `queued`, `running`, `ready`, or `ai_wait` (`uq_recipe_url_import_active`).
+- Notes: the batch worker writes `extract` here and does not insert `dish` or `recipe` until `POST /api/recipe_imports/{id}/keep`. Migrations `c7e1b4a92d10`, `e1a9c4d82f10`.
 
 ## Legacy / seed
 

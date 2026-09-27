@@ -10,6 +10,7 @@ logging.getLogger("app.mcp_auth").setLevel(logging.INFO)
 from fastmcp.utilities.lifespan import combine_lifespans
 
 from app.mcp_server import build_mcp_asgi_app
+from app.gemini_scheduler import gemini_scheduler
 from app.recipe_import_worker import import_worker
 from app.router import alias_review, auth, match_checker, mcp_oauth, nutrition, recipe_import, recipes
 
@@ -22,6 +23,7 @@ def _import_worker_disabled() -> bool:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    gemini_scheduler.start()
     task = None
     if not _import_worker_disabled():
         task = asyncio.create_task(import_worker())
@@ -34,6 +36,7 @@ async def lifespan(app: FastAPI):
                 await task
             except asyncio.CancelledError:
                 pass
+        await gemini_scheduler.stop()
 
 
 app = FastAPI(lifespan=combine_lifespans(lifespan, mcp_asgi.lifespan))
