@@ -7,7 +7,7 @@ pr-open
 - Issue(s): #23 — https://github.com/MathieuLaureti/cooking_website/issues/23
 - Input doc: docs/input/2026-09-26-mcp-oauth-resource-url.md
 - Branch: `fix/23-mcp-oauth-resource-url`
-- PR: **pending** (filled after `gh pr create`)
+- PR: https://github.com/MathieuLaureti/cooking_website/pull/24
 
 ## Summary
 OAuth protected-resource metadata now advertises the MCP resource identifier as `…/recipes/mcp` without a trailing slash (RFC 9728 / Gemini Spark). Streamable HTTP clients still connect at `…/recipes/mcp/`.

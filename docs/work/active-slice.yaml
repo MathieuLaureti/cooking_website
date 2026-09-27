@@ -9,9 +9,9 @@ issues:
     role: primary
 branch: fix/23-mcp-oauth-resource-url
 pr:
-  number: null
-  url: ""
-  state: ""
+  number: 24
+  url: https://github.com/MathieuLaureti/cooking_website/pull/24
+  state: open
 delivery_report: docs/delivery/23-mcp-oauth-resource-url.md
 labels:
   managed: agent-managed
@@ -22,6 +22,6 @@ gates:
   gate_2:
     approved_at: "2026-09-27T00:02:00Z"
     user_quote: "perfect now resume and do missing pipeline action and proceed"
-phase: implementing
-updated_at: "2026-09-27T00:02:00Z"
-updated_by: orchestrator
+phase: pr_open
+updated_at: "2026-09-27T00:10:00Z"
+updated_by: documenter
