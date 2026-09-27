@@ -13,7 +13,7 @@ open
 Resumable URL import pipeline with admin step labels, Postgres page cache, Gemini 503 backoff, queue cap, and priority scheduler.
 
 ## PR
-- TBD
+- https://github.com/MathieuLaureti/cooking_website/pull/32
 
 ## Test plan
 - [ ] CI pytest

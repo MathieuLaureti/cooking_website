@@ -9,12 +9,12 @@ issues:
     role: primary
 branch: feature/31-url-import-pipeline-resilience
 pr:
-  number: null
-  url: ""
+  number: 32
+  url: https://github.com/MathieuLaureti/cooking_website/pull/32
 delivery_report: docs/delivery/31-url-import-pipeline-resilience.md
 labels:
   managed: agent-managed
-phase: implementing
+phase: pr_open
 gates:
   gate_1:
     approved_at: "2026-09-27T19:35:00Z"
@@ -22,5 +22,5 @@ gates:
   gate_2:
     approved_at: "2026-09-27T19:40:00Z"
     user_quote: go
-updated_at: "2026-09-27T19:40:00Z"
+updated_at: "2026-09-27T19:45:00Z"
 updated_by: orchestrator
