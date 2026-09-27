@@ -9,12 +9,12 @@ issues:
     role: primary
 branch: fix/29-recipe-ingredient-extraction
 pr:
-  number: null
-  url: ""
+  number: 30
+  url: https://github.com/MathieuLaureti/cooking_website/pull/30
 delivery_report: docs/delivery/29-recipe-ingredient-extraction.md
 labels:
   managed: agent-managed
-phase: implementing
+phase: pr_open
 gates:
   gate_1:
     approved_at: "2026-09-27T19:30:00Z"

@@ -25,4 +25,4 @@ URL import sends complete ingredient lists: stronger `emit_recipe` system prompt
 - [ ] Retry Sally's URL import after deploy; four ingredients in extract
 
 ## PR
-- TBD
+- https://github.com/MathieuLaureti/cooking_website/pull/30
